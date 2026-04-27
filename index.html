@@ -274,11 +274,9 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
       <!-- Course -->
       <div class="card">
         <div class="ctitle">Course</div>
-        <div class="prow">
-          <button class="cpill active" id="pill-silkstone" onclick="selCourse('silkstone')">Silkstone<span class="cbdg">18 holes · Par 73</span></button>
-          <button class="cpill" id="pill-owston" onclick="selCourse('owston')">Owston Park<span class="cbdg">9 holes · Par 35</span></button>
-        </div>
-        <button class="cpill" id="pill-search" onclick="toggleSearch()" style="width:100%;margin-top:6px">🔍 Search any course<span class="cbdg">30,000+ worldwide</span></button>
+        <div id="recent-courses-label" style="font-size:11px;color:var(--t2);margin-bottom:6px;display:none">⏱ Recent courses</div>
+        <div id="recent-courses" style="margin-bottom:8px"></div>
+        <button class="cpill" id="pill-search" onclick="toggleSearch()" style="width:100%;margin-top:2px">🔍 Search any course<span class="cbdg">30,000+ worldwide</span></button>
         <div class="srchwrap" id="srchwrap">
           <div class="srchrow"><input type="text" class="srchi" id="srchi" placeholder="e.g. Augusta, St Andrews…" onkeydown="if(event.key==='Enter')doSearch()"><button class="srchbtn" onclick="doSearch()">Search</button></div>
           <div id="srch-res"></div>
@@ -303,8 +301,6 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
     <div id="pn-history" class="panel">
       <div class="frow" id="hist-course-filters">
         <button class="fb active" id="hf-all" onclick="setHF('all')">All courses</button>
-        <button class="fb" id="hf-silkstone" onclick="setHF('silkstone')">Silkstone</button>
-        <button class="fb" id="hf-owston" onclick="setHF('owston')">Owston Park</button>
       </div>
       <div class="frow" id="hist-player-filters">
         <button class="fb active" id="hp-all" onclick="setHP('all')">All rounds</button>
@@ -317,10 +313,8 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
 
     <!-- CHARTS TAB -->
     <div id="pn-charts" class="panel">
-      <div class="frow">
+      <div class="frow" id="chart-course-filters">
         <button class="fb active" id="cc-all" onclick="setCC('all')">All courses</button>
-        <button class="fb" id="cc-silkstone" onclick="setCC('silkstone')">Silkstone</button>
-        <button class="fb" id="cc-owston" onclick="setCC('owston')">Owston Park</button>
       </div>
       <div class="frow" id="chart-player-filters"></div>
       <div id="chart-content"><div class="empty"><div class="eico">📊</div>No rounds yet.</div></div>
@@ -421,10 +415,7 @@ let selectedPlayers=[]; // uids of players selected for current round
 let hf='all',hp='all',cc='all',cpf='all';
 
 const COLORS=['#1D9E75','#378ADD','#E8820C','#8B5CF6','#EC4899'];
-const COURSES={
-  silkstone:{name:'Silkstone Golf Club',holes:[{n:1,par:4,si:3},{n:2,par:4,si:17},{n:3,par:4,si:11},{n:4,par:3,si:15},{n:5,par:5,si:7},{n:6,par:4,si:13},{n:7,par:5,si:1},{n:8,par:4,si:5},{n:9,par:3,si:9},{n:10,par:4,si:4},{n:11,par:5,si:8},{n:12,par:5,si:18},{n:13,par:4,si:6},{n:14,par:4,si:12},{n:15,par:3,si:16},{n:16,par:4,si:10},{n:17,par:4,si:2},{n:18,par:4,si:14}],halves:[{l:'Front 9',t:'Out',s:0,e:9},{l:'Back 9',t:'In',s:9,e:18}]},
-  owston:{name:'Owston Park',holes:[{n:1,par:4,si:4},{n:2,par:4,si:8},{n:3,par:3,si:9},{n:4,par:4,si:5},{n:5,par:5,si:2},{n:6,par:3,si:6},{n:7,par:4,si:3},{n:8,par:4,si:1},{n:9,par:4,si:7}],halves:[{l:'All 9 Holes',t:'Total',s:0,e:9}]}
-};
+const COURSES={};
 const GK='XAXIAQF5MRIUAI52A3RT45VU3A';
 const $=id=>document.getElementById(id);
 const GSVG=`<svg width="18" height="18" viewBox="0 0 24 24" style="flex-shrink:0"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>`;
@@ -469,6 +460,14 @@ function subRounds(){
   if(unsub)unsub();
   unsub=onSnapshot(query(collection(db,'groups',cg.id,'rounds'),orderBy('date','desc')),snap=>{
     rounds=snap.docs.map(d=>({id:d.id,...d.data()}));
+    // Restore course data from round history into COURSES cache
+    rounds.forEach(r=>{
+      if(r.course&&r.courseHoles&&!COURSES[r.course]){
+        COURSES[r.course]={name:r.courseName||r.course,holes:r.courseHoles,halves:r.courseHalves||[{l:'All Holes',t:'Total',s:0,e:r.courseHoles.length}]};
+      }
+    });
+    buildCourseSelector();
+    buildCourseFilters();
     const at=document.querySelector('.tab.active')?.dataset.t;
     if(at==='history')renderHist();
     if(at==='charts')renderCharts();
@@ -487,6 +486,7 @@ function showApp(){
   const days=Math.max(0,30-Math.floor((Date.now()-ts)/86400000));
   $('tbadge').textContent=days>0?days+' days free':'Free plan';
   $('r-date').valueAsDate=new Date();
+  buildCourseSelector();
   buildPlayerPills();
   buildHcaps();
   buildSC();
@@ -743,14 +743,54 @@ function mIdx(uid){return getMembers().findIndex(m=>m.uid===uid);}
 function mColor(uid){return COLORS[mIdx(uid)%COLORS.length]||COLORS[0];}
 
 // ── Course ────────────────────────────────────────────────
-window.selCourse=c=>{
+function getGroupCourses(){
+  // Build unique course list from round history, most recently played first, max 5
+  const seen=new Set(),list=[];
+  [...rounds].forEach(r=>{
+    const key=r.course;
+    if(!seen.has(key)){
+      seen.add(key);
+      if(list.length<5)list.push({key,name:r.courseName||r.course,course:r.course,courseData:COURSES[r.course]||null});
+    }
+  });
+  return list;
+}
+
+function buildCourseSelector(){
+  const wrap=$('recent-courses');if(!wrap)return;
+  const courses=getGroupCourses();
+  const lbl=$('recent-courses-label');
+  if(!courses.length){
+    wrap.innerHTML='<p style="font-size:13px;color:var(--t2);margin-bottom:8px">Search for a course below — it\'ll be saved here for next time.</p>';
+    if(lbl)lbl.style.display='none';
+    ac=null;
+    return;
+  }
+  if(lbl)lbl.style.display='block';
+  wrap.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px">'+
+    courses.map(c=>`<button class="cpill${ac===c.key?' active':''}" id="cpill-${c.key}" onclick="selCourse('${c.key}')" style="flex:unset;padding:9px 14px">${c.name}<span class="cbdg">${c.courseData?c.courseData.holes.length+' holes · Par '+c.courseData.holes.reduce((a,h)=>a+h.par,0):''}</span></button>`).join('')+
+  '</div>';
+  if(!ac&&courses.length)selCourse(courses[0].key,false);
+}
+
+function buildCourseFilters(){
+  // Update history and chart course filter buttons dynamically
+  const courses=getGroupCourses();
+  const hf2=$('hist-course-filters');
+  if(hf2){hf2.innerHTML='<button class="fb active" id="hf-all" onclick="setHF(\'all\')">All courses</button>'+courses.map(c=>`<button class="fb" id="hf-${c.key}" onclick="setHF('${c.key}')">${c.name}</button>`).join('');}
+  const cf2=$('chart-course-filters');
+  if(cf2){cf2.innerHTML='<button class="fb active" id="cc-all" onclick="setCC(\'all\')">All courses</button>'+courses.map(c=>`<button class="fb" id="cc-${c.key}" onclick="setCC('${c.key}')">${c.name}</button>`).join('');}
+}
+
+window.selCourse=(c,rebuild=true)=>{
   ac=c;
   document.querySelectorAll('.cpill').forEach(p=>p.classList.remove('active'));
-  $('pill-'+c)?.classList.add('active');
+  $('cpill-'+c)?.classList.add('active');
+  $('pill-search')?.classList.remove('active');
   $('srchwrap')?.classList.remove('open');
   const lb=$('srch-lbl');if(lb)lb.style.display='none';
   const sr=$('srch-res');if(sr)sr.innerHTML='';
-  buildSC();
+  if(rebuild)buildSC();
 };
 window.toggleSearch=()=>{
   const w=$('srchwrap');if(!w)return;
@@ -785,8 +825,9 @@ window.loadCourse=idx=>{
     const sm={};[...wi].sort((a,b)=>(b.yardage||0)-(a.yardage||0)).forEach((h,i)=>{sm[h.hn]=i+1;});
     const bh=wi.map(h=>({n:h.hn,par:parseInt(h.par)||4,si:sm[h.hn]||h.hn}));
     const nm=c.club_name||'Unknown',loc=[c.location?.city,c.location?.country].filter(v=>v&&v!=='Unknown').join(', '),nh=bh.length;
-    COURSES._custom={name:nm+(loc?' · '+loc:''),holes:bh,halves:nh<=9?[{l:'All '+nh+' Holes',t:'Total',s:0,e:nh}]:[{l:'Front 9',t:'Out',s:0,e:9},{l:'Back 9',t:'In',s:9,e:nh}]};
-    ac='_custom';
+    const ckey='c_'+nm.replace(/[^a-zA-Z0-9]/g,'').toLowerCase().slice(0,20)+'_'+nh;
+    COURSES[ckey]={name:nm+(loc?' · '+loc:''),holes:bh,halves:nh<=9?[{l:'All '+nh+' Holes',t:'Total',s:0,e:nh}]:[{l:'Front 9',t:'Out',s:0,e:9},{l:'Back 9',t:'In',s:9,e:nh}]};
+    ac=ckey;
     document.querySelectorAll('.cpill').forEach(p=>p.classList.remove('active'));
     $('pill-search')?.classList.add('active');
     const lb=$('srch-lbl');if(lb){lb.textContent='✓ '+nm+' · '+nh+' holes · Par '+bh.reduce((a,h)=>a+h.par,0);lb.style.display='block';}
@@ -964,13 +1005,20 @@ window.saveRound=async()=>{
   }
   try{
     await addDoc(collection(db,'groups',cg.id,'rounds'),{
-      course:ac,courseName:C.name,mode:rm,
+      course:ac,courseName:C.name,
+      courseHoles:C.holes,courseHalves:C.halves,
+      mode:rm,
       soloPlayerId:rm==='solo'?(selectedPlayers[0]||null):null,
       playerIds:playing.map(m=>m.uid),
       date,playerData:pd,holeWins:hw,
       createdBy:cu.uid,createdAt:serverTimestamp()
     });
-    toast('Round saved! ⛳');buildSC();
+    // Add course to local COURSES cache if not already there
+    if(!COURSES[ac])COURSES[ac]=C;
+    toast('Round saved! ⛳');
+    buildCourseSelector();
+    buildCourseFilters();
+    buildSC();
   }catch(e){toast('Failed to save round','err');}
 };
 window.clearSC=()=>buildSC();
