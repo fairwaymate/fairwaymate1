@@ -239,7 +239,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
               <div class="grp-name" id="grp-name">My Group</div>
               <div class="grp-mem" id="grp-mem"></div>
             </div>
-            <button class="grp-manage-btn" onclick="switchTab('account')">Manage</button>
+            <button class="grp-manage-btn" onclick="switchTab('account')">Switch group</button>
           </div>
         </div>
         <div class="brow">
@@ -451,7 +451,19 @@ async function loadProfile(u){
 async function loadGroup(uid){
   const q=query(collection(db,'groups'),where('members','array-contains',uid));
   const snap=await getDocs(q);
-  if(!snap.empty){cg={id:snap.docs[0].id,...snap.docs[0].data()};subRounds();}
+  if(!snap.empty){
+    // Load all groups, set active to first (most recently created)
+    const allGroups=snap.docs.map(d=>({id:d.id,...d.data()}));
+    allGroups.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    // Check if user has a preferred active group stored
+    const prefId=localStorage.getItem('fm-active-group-'+uid);
+    const pref=allGroups.find(g=>g.id===prefId);
+    cg=pref||allGroups[0];
+    window._allGroups=allGroups;
+    subRounds();
+  } else {
+    window._allGroups=[];
+  }
   updateGroupUI();
 }
 
@@ -509,6 +521,21 @@ function updateGroupUI(){
   buildPlayerPills();
   buildHcaps();
 }
+
+window.switchGroup=async gid=>{
+  const allGroups=window._allGroups||[];
+  const g=allGroups.find(x=>x.id===gid);
+  if(!g)return;
+  cg=g;
+  localStorage.setItem('fm-active-group-'+cu.uid, gid);
+  if(unsub)unsub();
+  rounds=[];
+  subRounds();
+  updateGroupUI();
+  buildCourseSelector();
+  buildCourseFilters();
+  toast('Switched to "'+g.name+'"');
+};
 
 // ── Auth handlers ─────────────────────────────────────────
 window.doLogin=async()=>{
@@ -574,7 +601,7 @@ window.hideCodeModal=()=>{const o=$('ovl-code');if(o)o.style.display='none';};
 window.createGroup=async()=>{
   const nm=$('grp-inp')?.value.trim();
   if(!nm){toast('Please enter a group name','err');return;}
-  setBtn('cg-btn',true);
+  const btn=$('cg-btn');if(btn){btn.disabled=true;btn.textContent='Please wait…';}
   const code=genCode();
   try{
     const ref=await addDoc(collection(db,'groups'),{
@@ -583,12 +610,16 @@ window.createGroup=async()=>{
       inviteCode:code,createdAt:serverTimestamp()
     });
     await updateDoc(doc(db,'users',cu.uid),{groupId:ref.id});
-    cg={id:ref.id,name:nm,createdBy:cu.uid,members:[cu.uid],memberNames:[up.displayName],memberEmails:[cu.email.toLowerCase()],inviteCode:code};
+    const newGroup={id:ref.id,name:nm,createdBy:cu.uid,members:[cu.uid],memberNames:[up.displayName],memberEmails:[cu.email.toLowerCase()],inviteCode:code};
+    cg=newGroup;
+    window._allGroups=[newGroup,...(window._allGroups||[])];
+    localStorage.setItem('fm-active-group-'+cu.uid, ref.id);
+    if(unsub)unsub();rounds=[];
     subRounds();updateGroupUI();
     toast('Group "'+nm+'" created! 🎉');
     window.hideCreateGrp();
   }catch(e){toast('Failed to create group','err');}
-  setBtn('cg-btn',false);
+  if(btn){btn.disabled=false;btn.textContent='Create group';}
 };
 
 window.inviteWhatsApp=()=>{
@@ -639,6 +670,8 @@ window.joinByCode=async()=>{
     });
     await updateDoc(doc(db,'users',cu.uid),{groupId:snap.docs[0].id});
     cg={id:snap.docs[0].id,...gd,members:[...(gd.members||[]),cu.uid],memberNames:[...(gd.memberNames||[]),up.displayName]};
+    window._allGroups=[cg,...(window._allGroups||[]).filter(g=>g.id!==cg.id)];
+    localStorage.setItem('fm-active-group-'+cu.uid, cg.id);
     subRounds();updateGroupUI();
     toast('Joined "'+gd.name+'"! 🏌️');
     window.hideCodeModal();
@@ -1163,27 +1196,56 @@ function renderAcc(){
 
 function renderAccountGroup(){
   const wrap=$('acc-group-content');if(!wrap)return;
-  if(!cg){
-    wrap.innerHTML='<p style="font-size:13px;color:var(--t2);margin-bottom:10px">No group yet.</p><button class="btn btns" onclick="showCreateGrp()">Create a group</button><button class="btn btns" onclick="showCodeModal()">Join with invite code</button>';
+  const allGroups=window._allGroups||[];
+  if(!allGroups.length){
+    wrap.innerHTML=`<p style="font-size:13px;color:var(--t2);margin-bottom:10px">No groups yet.</p>
+      <button class="btn btns" onclick="showCreateGrp()">+ Create a group</button>
+      <button class="btn btns" onclick="showCodeModal()">Join with invite code</button>`;
     return;
   }
-  const isCreator=cu.uid===cg.createdBy;
-  const ms=getMembers();
-  const memberRows=ms.map((m,i)=>`
-    <div class="member-row">
+  const isCreator=cg&&cu.uid===cg.createdBy;
+  // Group switcher
+  const groupList=allGroups.map(g=>{
+    const isActive=cg&&g.id===cg.id;
+    return`<div class="member-row" style="cursor:pointer" onclick="switchGroup('${g.id}')">
       <div>
-        <div class="member-info" style="color:${COLORS[i%COLORS.length]}">${m.name}${m.isMe?' (you)':''}${cg.createdBy===m.uid?' 👑':''}</div>
-        <div class="member-sub">${(cg.memberEmails||[])[i]||''}</div>
+        <div class="member-info" style="color:${isActive?'var(--gt)':'var(--t)'};font-weight:${isActive?'700':'500'}">${g.name}${isActive?' ✓':''}</div>
+        <div class="member-sub">${(g.memberNames||[]).length} member${(g.memberNames||[]).length!==1?'s':''} · Code: ${g.inviteCode||'------'}</div>
       </div>
-      ${isCreator&&!m.isMe?`<button class="btn-sm-red" onclick="removeMember('${m.uid}')">Remove</button>`:''}
-    </div>`).join('');
+      ${isActive?'<span style="font-size:11px;background:var(--gl);color:var(--gt);padding:3px 8px;border-radius:20px;font-weight:600">Active</span>':'<span style="font-size:11px;color:var(--t3)">Tap to switch</span>'}
+    </div>`;
+  }).join('');
+
+  // Active group members
+  let memberSection='';
+  if(cg){
+    const ms=getMembers();
+    const memberRows=ms.map((m,i)=>`
+      <div class="member-row">
+        <div>
+          <div class="member-info" style="color:${COLORS[i%COLORS.length]}">${m.name}${m.isMe?' (you)':''}${cg.createdBy===m.uid?' 👑':''}</div>
+          <div class="member-sub">${(cg.memberEmails||[])[i]||''}</div>
+        </div>
+        ${isCreator&&!m.isMe?`<button class="btn-sm-red" onclick="removeMember('${m.uid}')">Remove</button>`:''}
+      </div>`).join('');
+
+    memberSection=`
+      <div style="margin-top:14px">
+        <div class="invite-code-box" style="margin-bottom:12px">
+          <div class="invite-code-label">GROUP CODE — ${cg.name}</div>
+          <div class="invite-code-val">${cg.inviteCode||'------'}</div>
+        </div>
+        <div style="margin-bottom:12px">${memberRows}</div>
+        ${isCreator?`<button class="btn btns" onclick="showInvite()">+ Invite a friend to ${cg.name}</button>`:'<p style="font-size:12px;color:var(--t3);margin-bottom:10px">Only the group creator can invite friends.</p>'}
+      </div>`;
+  }
+
   wrap.innerHTML=`
-    <div class="invite-code-box" style="margin-bottom:14px">
-      <div class="invite-code-label">GROUP CODE</div>
-      <div class="invite-code-val">${cg.inviteCode||'------'}</div>
-    </div>
-    <div style="margin-bottom:14px">${memberRows}</div>
-    ${isCreator?`<button class="btn btns" onclick="showInvite()">+ Invite a friend</button>`:'<p style="font-size:12px;color:var(--t3)">Only the group creator can invite friends.</p>'}`;
+    <div style="margin-bottom:4px;font-size:12px;color:var(--t2);font-weight:500">YOUR GROUPS</div>
+    <div style="margin-bottom:12px">${groupList}</div>
+    ${memberSection}
+    <button class="btn btns" style="margin-top:8px" onclick="showCreateGrp()">+ Create another group</button>
+    <button class="btn btns" onclick="showCodeModal()">Join with invite code</button>`;
 }
 
 window.saveProfile=async()=>{
