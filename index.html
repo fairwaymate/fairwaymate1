@@ -403,13 +403,45 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
   </div>
 </div>
 
-<script type="module">
-import{initializeApp}from'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,GoogleAuthProvider,signInWithPopup,sendPasswordResetEmail,updateProfile}from'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import{getFirestore,doc,setDoc,getDoc,collection,addDoc,query,where,getDocs,onSnapshot,updateDoc,deleteDoc,orderBy,serverTimestamp}from'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+// Firebase compat API - no imports needed, uses global firebase object
+const getAuth = () => firebase.auth();
+const getFirestore = () => firebase.firestore();
+const GoogleAuthProvider = firebase.auth.GoogleAuthProvider;
+const serverTimestamp = firebase.firestore.FieldValue.serverTimestamp;
+
+// Auth functions
+const createUserWithEmailAndPassword = (auth, em, pw) => firebase.auth().createUserWithEmailAndPassword(em, pw);
+const signInWithEmailAndPassword = (auth, em, pw) => firebase.auth().signInWithEmailAndPassword(em, pw);
+const signOut = (auth) => firebase.auth().signOut();
+const onAuthStateChanged = (auth, cb) => firebase.auth().onAuthStateChanged(cb);
+const signInWithPopup = (auth, provider) => firebase.auth().signInWithPopup(provider);
+const sendPasswordResetEmail = (auth, em) => firebase.auth().sendPasswordResetEmail(em);
+const updateProfile = (user, data) => user.updateProfile(data);
+
+// Firestore functions  
+const doc = (db, ...path) => { const p = path.join('/'); return firebase.firestore().doc(p); };
+const collection = (db, ...path) => firebase.firestore().collection(path.join('/'));
+const getDoc = (ref) => ref.get();
+const setDoc = (ref, data) => ref.set(data);
+const updateDoc = (ref, data) => ref.update(data);
+const deleteDoc = (ref) => ref.delete();
+const addDoc = (colRef, data) => colRef.add(data);
+const getDocs = (q) => q.get();
+const onSnapshot = (q, cb) => q.onSnapshot(snap => { snap.docs = snap.docs || []; cb(snap); });
+const query = (colRef, ...constraints) => {
+  let q = colRef;
+  constraints.forEach(c => { q = c(q); });
+  return q;
+};
+const where = (field, op, val) => (q) => q.where(field, op, val);
+const orderBy = (field, dir) => (q) => q.orderBy(field, dir || 'asc');
 
 const FC={apiKey:"AIzaSyD-H0117WVTSg3jKLH0lGvyQH3PNdIKFEs",authDomain:"fairwaymate-625c3.firebaseapp.com",projectId:"fairwaymate-625c3",storageBucket:"fairwaymate-625c3.firebasestorage.app",messagingSenderId:"270289597388",appId:"1:270289597388:web:27d76973a400f3a6682369"};
-const fbApp=initializeApp(FC),auth=getAuth(fbApp),db=getFirestore(fbApp),gp=new GoogleAuthProvider();
+firebase.initializeApp(FC);const fbApp=firebase.app(),auth=firebase.auth(),db=firebase.firestore(),gp=new firebase.auth.GoogleAuthProvider();
 
 // ── State ─────────────────────────────────────────────────
 let cu=null,cg=null,up=null,rounds=[],chartObjs=[];
@@ -482,17 +514,17 @@ function setBtn(id,v){const b=$(id);if(!b)return;b.disabled=v;b.textContent=v?'P
 );}
 
 // ── Auth state ────────────────────────────────────────────
-onAuthStateChanged(auth,async u=>{
+firebase.auth().onAuthStateChanged(async u=>{
   if(u){cu=u;await loadProfile(u);showApp();}
   else{cu=null;cg=null;up=null;showPage('pg-auth');window.showAuth('login');}
 });
 
 async function loadProfile(u){
-  const ref=doc(db,'users',u.uid),snap=await getDoc(ref);
-  if(!snap.exists()){
+  const ref=firebase.firestore().doc('users/'+u.uid);const snap=await ref.get();
+  if(!snap.exists){
     const fallbackName=u.displayName||(u.email?u.email.split('@')[0].replace(/[^a-zA-Z ]/g,' ').trim():'Player');
     up={uid:u.uid,email:u.email,displayName:fallbackName,handicap:18,trialStart:new Date(),plan:'trial'};
-    await setDoc(ref,{...up,trialStart:serverTimestamp(),createdAt:serverTimestamp()});
+    await ref.set({...up,trialStart:firebase.firestore.FieldValue.firebase.firestore.FieldValue.serverTimestamp(),createdAt:firebase.firestore.FieldValue.firebase.firestore.FieldValue.serverTimestamp()});
   } else {
     up=snap.data();
     if(up.trialStart?.toDate)up.trialStart=up.trialStart.toDate();
@@ -501,8 +533,8 @@ async function loadProfile(u){
 }
 
 async function loadGroup(uid){
-  const q=query(collection(db,'groups'),where('members','array-contains',uid));
-  const snap=await getDocs(q);
+  const q=query(firebase.firestore().collection('groups'),where('members','array-contains',uid));
+  const snap=await q.get();
   if(!snap.empty){
     // Load all groups, set active to first (most recently created)
     const allGroups=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -522,7 +554,7 @@ async function loadGroup(uid){
 function subRounds(){
   if(!cg)return;
   if(unsub)unsub();
-  unsub=onSnapshot(query(collection(db,'groups',cg.id,'rounds'),orderBy('date','desc')),snap=>{
+  unsub=firebase.firestore().collection('groups/'+cg.id+'/rounds').orderBy('date','desc').onSnapshot(snap=>{
     rounds=snap.docs.map(d=>({id:d.id,...d.data()}));
     // Restore course data from round history into COURSES cache
     rounds.forEach(r=>{
@@ -600,7 +632,7 @@ window.doLogin=async()=>{
   if(!em||!pw){toast('Please fill in all fields','err');return;}
   const btn=$('l-btn');if(btn){btn.disabled=true;btn.textContent='Please wait…';}
   try{
-    await signInWithEmailAndPassword(auth,em,pw);
+    await firebase.auth().signInWithEmailAndPassword(em,pw);
   } catch(e){
     toast(errMsg(e.code),'err');
     if(btn){btn.disabled=false;btn.textContent='Sign in';}
@@ -613,9 +645,9 @@ window.doSignup=async()=>{
   if(pw.length<6){toast('Password needs 6+ characters','err');return;}
   const btn=$('s-btn');if(btn){btn.disabled=true;btn.textContent='Please wait…';}
   try{
-    const c=await createUserWithEmailAndPassword(auth,em,pw);
-    await updateProfile(c.user,{displayName:nm});
-    await setDoc(doc(db,'users',c.user.uid),{uid:c.user.uid,email:em,displayName:nm,handicap:hcp,trialStart:serverTimestamp(),plan:'trial',createdAt:serverTimestamp()});
+    const c=await firebase.auth().createUserWithEmailAndPassword(em,pw);
+    await c.user.updateProfile({displayName:nm});
+    await firebase.firestore().doc('users/'+c.user.uid).set({uid:c.user.uid,email:em,displayName:nm,handicap:hcp,trialStart:firebase.firestore.FieldValue.firebase.firestore.FieldValue.serverTimestamp(),plan:'trial',createdAt:firebase.firestore.FieldValue.firebase.firestore.FieldValue.serverTimestamp()});
   }catch(e){
     toast(errMsg(e.code),'err');
     if(btn){btn.disabled=false;btn.textContent='Create free account';}
@@ -623,7 +655,7 @@ window.doSignup=async()=>{
 };
 
 window.doGoogle=async()=>{
-  try{await signInWithPopup(auth,gp);}
+  try{await firebase.auth().signInWithPopup(gp);}
   catch(e){if(e.code!=='auth/popup-closed-by-user')toast(errMsg(e.code),'err');}
 };
 
@@ -631,12 +663,12 @@ window.doForgot=async()=>{
   const em=$('f-email')?.value.trim();
   if(!em){toast('Please enter your email','err');return;}
   setBtn('f-btn',true);
-  try{await sendPasswordResetEmail(auth,em);toast('Reset email sent! Check your inbox.');window.showAuth('login');}
+  try{await firebase.auth().sendPasswordResetEmail(em);toast('Reset email sent! Check your inbox.');window.showAuth('login');}
   catch(e){toast(errMsg(e.code),'err');}
   setBtn('f-btn',false);
 };
 
-window.doLogout=async()=>{if(unsub)unsub();await signOut(auth);};
+window.doLogout=async()=>{if(unsub)unsub();await firebase.auth().signOut();};
 
 // ── Groups ────────────────────────────────────────────────
 function genCode(){return(Math.random().toString(36).slice(2,5)+Math.random().toString(36).slice(2,5)).toUpperCase().slice(0,6);}
@@ -666,12 +698,12 @@ window.createGroup=async()=>{
   const btn=$('cg-btn');if(btn){btn.disabled=true;btn.textContent='Please wait…';}
   const code=genCode();
   try{
-    const ref=await addDoc(collection(db,'groups'),{
+    const ref=const ref=await firebase.firestore().collection('groups').add({
       name:nm,createdBy:cu.uid,
       members:[cu.uid],memberNames:[up.displayName],memberEmails:[cu.email.toLowerCase()],
-      inviteCode:code,createdAt:serverTimestamp()
+      inviteCode:code,createdAt:firebase.firestore.FieldValue.firebase.firestore.FieldValue.serverTimestamp()
     });
-    await updateDoc(doc(db,'users',cu.uid),{groupId:ref.id});
+    await firebase.firestore().doc('users/'+cu.uid).update({groupId:ref.id});
     const newGroup={id:ref.id,name:nm,createdBy:cu.uid,members:[cu.uid],memberNames:[up.displayName],memberEmails:[cu.email.toLowerCase()],inviteCode:code};
     cg=newGroup;
     window._allGroups=[newGroup,...(window._allGroups||[])];
@@ -704,10 +736,10 @@ window.sendEmailInvite=async()=>{
   if(!em){toast('Please enter an email','err');return;}
   setBtn('inv-btn',true);
   try{
-    await addDoc(collection(db,'invitations'),{
+    await firebase.firestore().collection('invitations').add({
       groupId:cg.id,groupName:cg.name,inviteCode:cg.inviteCode||'',
       invitedBy:cu.uid,invitedByName:up.displayName,
-      invitedEmail:em.toLowerCase(),status:'pending',createdAt:serverTimestamp()
+      invitedEmail:em.toLowerCase(),status:'pending',createdAt:firebase.firestore.FieldValue.firebase.firestore.FieldValue.serverTimestamp()
     });
     toast('Invite sent to '+em+' ✉️');
     $('inv-email').value='';
@@ -720,17 +752,17 @@ window.joinByCode=async()=>{
   if(code.length!==6){toast('Please enter a 6-character code','err');return;}
   setBtn('jc-btn',true);
   try{
-    const q=query(collection(db,'groups'),where('inviteCode','==',code));
-    const snap=await getDocs(q);
+    const q=query(firebase.firestore().collection('groups'),where('inviteCode','==',code));
+    const snap=await q.get();
     if(snap.empty){toast('Code not found — double check and try again','err');setBtn('jc-btn',false);return;}
     const gRef=snap.docs[0].ref,gd=snap.docs[0].data();
     if((gd.members||[]).includes(cu.uid)){toast("You're already in this group!",'info');window.hideCodeModal();setBtn('jc-btn',false);return;}
-    await updateDoc(gRef,{
+    await gRef.update({
       members:[...(gd.members||[]),cu.uid],
       memberNames:[...(gd.memberNames||[]),up.displayName],
       memberEmails:[...(gd.memberEmails||[]),cu.email.toLowerCase()]
     });
-    await updateDoc(doc(db,'users',cu.uid),{groupId:snap.docs[0].id});
+    await firebase.firestore().doc('users/'+cu.uid).update({groupId:snap.docs[0].id});
     cg={id:snap.docs[0].id,...gd,members:[...(gd.members||[]),cu.uid],memberNames:[...(gd.memberNames||[]),up.displayName]};
     window._allGroups=[cg,...(window._allGroups||[]).filter(g=>g.id!==cg.id)];
     localStorage.setItem('fm-active-group-'+cu.uid, cg.id);
@@ -752,8 +784,8 @@ window.removeMember=async uid=>{
   const newM=[...cg.members],newN=[...cg.memberNames],newE=[...cg.memberEmails];
   newM.splice(idx,1);newN.splice(idx,1);newE.splice(idx,1);
   try{
-    await updateDoc(doc(db,'groups',cg.id),{members:newM,memberNames:newN,memberEmails:newE});
-    await updateDoc(doc(db,'users',uid),{groupId:null});
+    await firebase.firestore().doc('groups/'+cg.id).update({members:newM,memberNames:newN,memberEmails:newE});
+    await firebase.firestore().doc('users/'+uid).update({groupId:null});
     cg={...cg,members:newM,memberNames:newN,memberEmails:newE};
     updateGroupUI();toast('Member removed');
   }catch(e){toast('Failed to remove member','err');}
@@ -1166,14 +1198,14 @@ window.saveRound=async()=>{
     });
   }
   try{
-    await addDoc(collection(db,'groups',cg.id,'rounds'),{
+    await firebase.firestore().collection('groups/'+cg.id+'/rounds').add({
       course:ac,courseName:C.name,
       courseHoles:C.holes,courseHalves:C.halves,
       mode:rm,
       soloPlayerId:rm==='solo'?(selectedPlayers[0]||null):null,
       playerIds:playing.map(m=>m.uid),
       date,playerData:pd,holeWins:hw,
-      createdBy:cu.uid,createdAt:serverTimestamp()
+      createdBy:cu.uid,createdAt:firebase.firestore.FieldValue.firebase.firestore.FieldValue.serverTimestamp()
     });
     // Add course to local COURSES cache if not already there
     if(!COURSES[ac])COURSES[ac]=C;
@@ -1239,7 +1271,7 @@ function renderHist(){
 
 window.delRound=async id=>{
   if(!confirm('Delete this round?'))return;
-  try{await deleteDoc(doc(db,'groups',cg.id,'rounds',id));toast('Round deleted');}
+  try{await firebase.firestore().doc('groups/'+cg.id+'/rounds/'+id).delete();toast('Round deleted');}
   catch(e){toast('Failed to delete','err');}
 };
 
@@ -1445,8 +1477,8 @@ window.saveProfile=async()=>{
   const nm=$('acc-name')?.value.trim(),hcp=parseFloat($('acc-hcp')?.value)||18;
   if(!nm){toast('Please enter a name','err');return;}
   try{
-    await updateDoc(doc(db,'users',cu.uid),{displayName:nm,handicap:hcp});
-    await updateProfile(cu,{displayName:nm});
+    await firebase.firestore().doc('users/'+cu.uid).update({displayName:nm,handicap:hcp});
+    await cu.updateProfile({displayName:nm});
     up.displayName=nm;up.handicap=hcp;
     $('ava').textContent=nm.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
     // Also update name in all groups this user belongs to
@@ -1456,7 +1488,7 @@ window.saveProfile=async()=>{
       if(idx>=0){
         const newNames=[...(g.memberNames||[])];
         newNames[idx]=nm;
-        await updateDoc(doc(db,'groups',g.id),{memberNames:newNames});
+        await firebase.firestore().doc('groups/'+g.id).update({memberNames:newNames});
         g.memberNames=newNames;
         if(cg&&cg.id===g.id){cg.memberNames=newNames;}
       }
