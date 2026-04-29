@@ -245,6 +245,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
         <div class="brow">
           <button class="bsm" onclick="showInvite()">+ Invite friend</button>
           <button class="bsm" onclick="showCodeModal()">Join with code</button>
+          <button class="bsm bsm-green" onclick="showCreateGrp()">+ Create group</button>
         </div>
       </div>
       <div id="grp-no" style="display:none">
@@ -439,7 +440,8 @@ onAuthStateChanged(auth,async u=>{
 async function loadProfile(u){
   const ref=doc(db,'users',u.uid),snap=await getDoc(ref);
   if(!snap.exists()){
-    up={uid:u.uid,email:u.email,displayName:u.displayName||u.email.split('@')[0],handicap:18,trialStart:new Date(),plan:'trial'};
+    const fallbackName=u.displayName||(u.email?u.email.split('@')[0].replace(/[^a-zA-Z ]/g,' ').trim():'Player');
+    up={uid:u.uid,email:u.email,displayName:fallbackName,handicap:18,trialStart:new Date(),plan:'trial'};
     await setDoc(ref,{...up,trialStart:serverTimestamp(),createdAt:serverTimestamp()});
   } else {
     up=snap.data();
