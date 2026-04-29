@@ -183,7 +183,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
       <div class="field"><label>Password</label><input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"></div>
       <button class="abtn abtn-g" id="l-btn" data-label="Sign in" onclick="doLogin()">Sign in</button>
       <div class="divider">or</div>
-      <button class="abtn abtn-w" onclick="doGoogle()">__GSVG__ Continue with Google</button>
+      <button class="abtn abtn-w" onclick="doGoogle()"><svg width="18" height="18" viewBox="0 0 24 24" style="flex-shrink:0"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Continue with Google</button>
       <div class="auth-lnk">No account? <a onclick="showAuth('signup')">Sign up free</a> &nbsp;·&nbsp; <a onclick="showAuth('forgot')">Forgot password?</a></div>
     </div>
     <div id="a-signup" class="auth-card" style="display:none">
@@ -197,7 +197,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
       <div class="trial-note">✓ 30 days full access free — no credit card needed</div>
       <button class="abtn abtn-g" id="s-btn" data-label="Create free account" onclick="doSignup()">Create free account</button>
       <div class="divider">or</div>
-      <button class="abtn abtn-w" onclick="doGoogle()">__GSVG__ Sign up with Google</button>
+      <button class="abtn abtn-w" onclick="doGoogle()"><svg width="18" height="18" viewBox="0 0 24 24" style="flex-shrink:0"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Sign up with Google</button>
       <div class="auth-lnk">Already have an account? <a onclick="showAuth('login')">Sign in</a></div>
     </div>
     <div id="a-forgot" class="auth-card" style="display:none">
@@ -331,6 +331,8 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
         <button class="btn btnp" onclick="saveProfile()">Save profile</button>
       </div>
 
+      <div id="acc-upgrade-wrap"></div>
+
       <div class="asec" id="acc-group-sec">
         <div class="ctitle">My Group</div>
         <div id="acc-group-content">
@@ -381,7 +383,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
       <div class="invite-code-sub">Anyone with this code can join</div>
     </div>
     <button class="abtn wa-btn" onclick="inviteWhatsApp()">
-      __WASVG__ Invite via WhatsApp
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white" style="flex-shrink:0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> Invite via WhatsApp
     </button>
     <div class="divider">or send by email</div>
     <div class="field"><label>Friend's email</label><input type="email" id="inv-email" placeholder="their@email.com"></div>
@@ -415,7 +417,55 @@ let ac='silkstone',rm='group',unsub=null;
 let selectedPlayers=[]; // uids of players selected for current round
 let hf='all',hp='all',cc='all',cpf='all';
 
-const COLORS=['#1D9E75','#378ADD','#E8820C','#8B5CF6','#EC4899'];
+const LIMITS={
+  free:{groupRounds:20,courseSearchPerMonth:5,historyRounds:10,chartRounds:5,groups:1},
+  trial:{groupRounds:Infinity,courseSearchPerMonth:Infinity,historyRounds:Infinity,chartRounds:Infinity,groups:Infinity},
+  premium:{groupRounds:Infinity,courseSearchPerMonth:Infinity,historyRounds:Infinity,chartRounds:Infinity,groups:Infinity}
+};
+
+function getPlan(){
+  if(!up)return'free';
+  const ts=up.trialStart instanceof Date?up.trialStart:new Date();
+  const days=Math.max(0,30-Math.floor((Date.now()-ts)/86400000));
+  if(days>0)return'trial';
+  return up.plan==='premium'?'premium':'free';
+}
+
+function getLimit(feature){return LIMITS[getPlan()]?.[feature]??LIMITS.free[feature];}
+
+function isTrialActive(){return getPlan()==='trial';}
+function isPremium(){return getPlan()==='premium'||getPlan()==='trial';}
+
+function trialDaysLeft(){
+  if(!up)return 0;
+  const ts=up.trialStart instanceof Date?up.trialStart:new Date();
+  return Math.max(0,30-Math.floor((Date.now()-ts)/86400000));
+}
+
+function getGroupRoundCount(){return rounds.filter(r=>r.mode!=='solo').length;}
+function getMonthSearchCount(){
+  const key='fm-searches-'+new Date().toISOString().slice(0,7)+'-'+(cu?.uid||'');
+  return parseInt(localStorage.getItem(key)||'0');
+}
+function incrementSearchCount(){
+  const key='fm-searches-'+new Date().toISOString().slice(0,7)+'-'+(cu?.uid||'');
+  localStorage.setItem(key,String(getMonthSearchCount()+1));
+}
+
+function showUpgradePrompt(reason){
+  const msgs={
+    groupRounds:'You\'ve used all 20 free group rounds. Upgrade to Premium for unlimited rounds! 🏌️',
+    courseSearch:'You\'ve used all 5 free course searches this month. Upgrade to Premium for unlimited searches! 🔍',
+    groups:'Free plan is limited to 1 group. Upgrade to Premium to create unlimited groups! 👥',
+    charts:'Upgrade to Premium to see your full chart history! 📊',
+    history:'Upgrade to Premium to see your full round history! 📋'
+  };
+  const msg=msgs[reason]||'Upgrade to FairwayMate Premium for full access!';
+  if(confirm(msg+'\n\nUpgrade for just £2.99/month — tap OK to find out more.')){
+    // Phase 3 will add Stripe here — for now show info
+    alert('Premium coming soon! 🚀\n\nYou\'ll be able to upgrade to FairwayMate Premium for £2.99/month or £19.99/year.\n\nWe\'ll notify you when payments are live.');
+  }
+}
 const COURSES={};
 const GK='XAXIAQF5MRIUAI52A3RT45VU3A';
 const $=id=>document.getElementById(id);
@@ -429,7 +479,7 @@ function errMsg(c){return({'auth/user-not-found':'No account with that email','a
 function setBtn(id,v){const b=$(id);if(!b)return;b.disabled=v;b.textContent=v?'Please wait…':b.dataset.label;}
 
 // Fix SVG placeholders
-function fixSVGs(){document.querySelectorAll('.abtn-w,.wa-btn').forEach(b=>{b.innerHTML=b.innerHTML.replace('__GSVG__',GSVG).replace('__WASVG__',WASVG);});}
+);}
 
 // ── Auth state ────────────────────────────────────────────
 onAuthStateChanged(auth,async u=>{
@@ -490,15 +540,20 @@ function subRounds(){
 
 function showApp(){
   showPage('pg-app');
-  fixSVGs();
   // Check URL for invite code
   const urlCode=new URLSearchParams(window.location.search).get('join');
   if(urlCode&&!cg){$('join-code').value=urlCode.toUpperCase();showCodeModal();}
   const nm=up?.displayName||cu.email;
   $('ava').textContent=nm.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
   const ts=up?.trialStart instanceof Date?up.trialStart:new Date();
-  const days=Math.max(0,30-Math.floor((Date.now()-ts)/86400000));
-  $('tbadge').textContent=days>0?days+' days free':'Free plan';
+  const days=trialDaysLeft();
+  const plan=getPlan();
+  const badge=$('tbadge');
+  if(badge){
+    if(plan==='premium'){badge.textContent='Premium ⭐';badge.style.background='#c9a84c22';badge.style.color='#7A5200';}
+    else if(plan==='trial'){badge.textContent=days+' days free';badge.style.background='var(--gl)';badge.style.color='var(--gt)';}
+    else{badge.textContent='Free plan';badge.style.background='var(--bg)';badge.style.color='var(--t2)';}
+  }
   $('r-date').valueAsDate=new Date();
   buildCourseSelector();
   buildPlayerPills();
@@ -603,6 +658,11 @@ window.hideCodeModal=()=>{const o=$('ovl-code');if(o)o.style.display='none';};
 window.createGroup=async()=>{
   const nm=$('grp-inp')?.value.trim();
   if(!nm){toast('Please enter a group name','err');return;}
+  // Check group limit
+  if(!isPremium()){
+    const allGroups=window._allGroups||[];
+    if(allGroups.length>=getLimit('groups')){showUpgradePrompt('groups');window.hideCreateGrp();return;}
+  }
   const btn=$('cg-btn');if(btn){btn.disabled=true;btn.textContent='Please wait…';}
   const code=genCode();
   try{
@@ -702,7 +762,15 @@ window.removeMember=async uid=>{
 // ── Player selection ──────────────────────────────────────
 function getMembers(){
   if(!cg)return cu?[{uid:cu.uid,name:up?.displayName||'Me',isMe:true}]:[];
-  return(cg.members||[]).map((uid,i)=>({uid,name:(cg.memberNames||[])[i]||'Player '+(i+1),isMe:uid===cu?.uid}));
+  return(cg.members||[]).map((uid,i)=>{
+    let name=(cg.memberNames||[])[i]||'Player '+(i+1);
+    // If name looks like an email address or email username, use a cleaner fallback
+    if(name.includes('@')||name.includes('.')){
+      // If this is the current user, use their up.displayName which is always fresh
+      if(uid===cu?.uid&&up?.displayName&&!up.displayName.includes('@'))name=up.displayName;
+    }
+    return{uid,name,isMe:uid===cu?.uid};
+  });
 }
 
 function buildPlayerPills(){
@@ -836,18 +904,30 @@ window.toggleSearch=()=>{
 };
 window.doSearch=async()=>{
   const q=$('srchi')?.value.trim();if(!q)return;
+  // Check search limit
+  if(!isPremium()){
+    const used=getMonthSearchCount();
+    const limit=getLimit('courseSearchPerMonth');
+    if(used>=limit){showUpgradePrompt('courseSearch');return;}
+  }
   const r=$('srch-res');if(!r)return;
   r.innerHTML='<div class="srst">Searching…</div>';
   try{
     const res=await fetch('https://api.golfcourseapi.com/v1/search?search_query='+encodeURIComponent(q),{headers:{'Authorization':'Key '+GK}});
     const d=await res.json();const cs=d.courses||[];
     if(!cs.length){r.innerHTML='<div class="srst">No courses found. Try adding the country.</div>';return;}
+    incrementSearchCount();
+    if(!isPremium()){
+      const remaining=getLimit('courseSearchPerMonth')-getMonthSearchCount();
+      if(remaining<=1)r.innerHTML=`<div style="background:var(--gl);border-radius:var(--rs);padding:8px 12px;font-size:12px;color:var(--gt);margin-bottom:6px">⚠️ ${remaining} free search${remaining!==1?'es':''} remaining this month</div>`;
+    }
     window._sr=cs.slice(0,15);
-    r.innerHTML=cs.slice(0,15).map((c,i)=>{
+    const resultsHtml=cs.slice(0,15).map((c,i)=>{
       const loc=[c.location?.city,c.location?.country].filter(v=>v&&v!=='Unknown').join(', ');
       const n=(c.tees?.male||c.tees?.female||[])[0]?.number_of_holes||'';
       return`<div class="sri" onclick="loadCourse(${i})"><div class="srn">${c.club_name||'Unknown'}</div><div class="srs">${loc}${n?' · '+n+' holes':''}</div></div>`;
     }).join('');
+    r.innerHTML=(r.innerHTML||'')+resultsHtml;
   }catch(e){r.innerHTML='<div class="srst">Search failed — check your connection.</div>';}
 };
 window.loadCourse=idx=>{
@@ -1059,6 +1139,12 @@ window.saveRound=async()=>{
   const date=$('r-date')?.value;if(!date){toast('Please select a date','err');return;}
   const C=COURSES[ac];if(!C){toast('Please select a course','err');return;}
   if(!cg){toast('Please create or join a group first','err');return;}
+  // Check group round limit for free users
+  if(rm==='group'&&!isPremium()){
+    const used=getGroupRoundCount();
+    const limit=getLimit('groupRounds');
+    if(used>=limit){showUpgradePrompt('groupRounds');return;}
+  }
   const playing=getMembers().filter(m=>selectedPlayers.includes(m.uid));
   if(!playing.length){toast('Please select at least one player','err');return;}
   const pd={};
@@ -1126,8 +1212,12 @@ function filteredRounds(){
 // ── History ───────────────────────────────────────────────
 function renderHist(){
   const ct=$('hist-content');if(!ct)return;
-  const rs=filteredRounds();
+  let rs=filteredRounds();
   if(!rs.length){ct.innerHTML='<div class="empty"><div class="eico">📋</div>No rounds found.</div>';return;}
+  // Limit history for free users
+  const histLimit=getLimit('historyRounds');
+  const isLimited=!isPremium()&&rs.length>histLimit;
+  if(isLimited)rs=rs.slice(0,histLimit);
   const fd=d=>{try{const[y,m,dy]=d.split('-');return dy+'/'+m+'/'+y;}catch(e){return d||'';}};
   ct.innerHTML=rs.map(r=>{
     const pd=r.playerData||{},uids=r.playerIds||Object.keys(pd),isSolo=r.mode==='solo';
@@ -1137,6 +1227,14 @@ function renderHist(){
     const playerCards=uids.map((uid,i)=>{const p=pd[uid]||{};const col=COLORS[i%COLORS.length];return`<div class="rp"><div class="rpn" style="color:${col}">${p.name||'Player'+(i+1)}</div><div class="rpd2">Gross: ${p.gross||'—'} · Net: ${p.net!==undefined?p.net:'—'} · Stab: ${p.stab||0}</div>${!isSolo&&(r.holeWins?.[uid]!==undefined)?`<div class="rpi">${r.holeWins[uid]} hole${r.holeWins[uid]!==1?'s':''} won</div>`:''}</div>`;}).join('');
     return`<div class="rcard"><div class="rhdr"><div class="rdate">${fd(r.date)}</div>${pill}</div><div class="rcrs">⛳ ${r.courseName||'Unknown'}</div><div class="rscores ${scls}">${playerCards}</div><div class="rbtns"><button class="rbtn rbv" onclick="viewRound('${r.id}')">View scorecard</button><button class="rbtn rbd" onclick="delRound('${r.id}')">Delete</button></div></div>`;
   }).join('');
+  // Show upgrade banner if history is limited
+  if(isLimited){
+    ct.innerHTML+=`<div style="background:var(--gl);border:.5px solid var(--g);border-radius:var(--r);padding:16px;text-align:center;margin-top:8px">
+      <div style="font-size:14px;font-weight:600;color:var(--gt);margin-bottom:6px">📋 ${filteredRounds().length - histLimit} older rounds hidden</div>
+      <div style="font-size:13px;color:var(--gt);margin-bottom:12px;opacity:.8">Upgrade to Premium to see your full history</div>
+      <button class="btn btnp" style="margin:0" onclick="showUpgradePrompt('history')">Upgrade to Premium — £2.99/month</button>
+    </div>`;
+  }
 }
 
 window.delRound=async id=>{
@@ -1205,6 +1303,11 @@ function renderCharts(){
   if(cc!=='all')rs=rs.filter(r=>r.course===cc);
   rs=rs.slice().reverse();
   if(!rs.length){ct.innerHTML='<div class="empty"><div class="eico">📊</div>No rounds yet.</div>';return;}
+  // Limit charts for free users
+  const chartLimit=getLimit('chartRounds');
+  const isLimited=!isPremium()&&rs.length>chartLimit;
+  const hiddenCount=isLimited?rs.length-chartLimit:0;
+  if(isLimited)rs=rs.slice(0,chartLimit);
   const ms=getMembers();
   const showMs=cpf==='all'?ms:ms.filter(m=>m.uid===cpf);
   const labels=rs.map(r=>{try{const[y,m,d]=(r.date||'').split('-');return d+'/'+m+'/'+y.slice(2);}catch(e){return r.date||'';}});
@@ -1220,6 +1323,7 @@ function renderCharts(){
     });
   });
   ct.innerHTML=`
+    ${isLimited?`<div style="background:#FFF8E7;border:.5px solid #E6A817;border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;font-size:13px;color:#7A5200">📊 Showing last ${chartLimit} rounds. <a onclick="showUpgradePrompt('charts')" style="font-weight:600;cursor:pointer;color:var(--gt)">Upgrade for full charts →</a></div>`:''}
     <div class="leg">${showMs.map(m=>`<span><span class="lsq" style="background:${mColor(m.uid)}"></span>${m.name}</span>`).join('')}</div>
     <div class="csec"><div class="cttl">Stableford points per round</div><div class="cwrap"><canvas id="ch-s"></canvas></div></div>
     <div class="csec"><div class="cttl">Gross score per round</div><div class="cwrap"><canvas id="ch-g"></canvas></div></div>`;
@@ -1237,10 +1341,49 @@ function renderAcc(){
   if(!cu||!up)return;
   const n=$('acc-name');if(n)n.value=up.displayName||'';
   const h=$('acc-hcp');if(h)h.value=up.handicap||18;
-  const ts=up.trialStart instanceof Date?up.trialStart:new Date();
-  const days=Math.max(0,30-Math.floor((Date.now()-ts)/86400000));
-  const ap=$('acc-plan');if(ap)ap.textContent=days>0?'Free trial — '+days+' days remaining':'Free plan';
+  const days=trialDaysLeft();
+  const plan=getPlan();
+  const ap=$('acc-plan');
+  if(ap){
+    if(plan==='premium'){ap.textContent='⭐ Premium';ap.style.background='#c9a84c22';ap.style.color='#7A5200';}
+    else if(plan==='trial'){ap.textContent='Free trial — '+days+' days remaining';}
+    else{ap.textContent='Free plan';}
+  }
   const ae=$('acc-email');if(ae)ae.textContent=cu.email;
+  // Show upgrade section for non-premium users
+  const upgWrap=$('acc-upgrade-wrap');
+  if(upgWrap){
+    if(plan==='premium'){
+      upgWrap.style.display='none';
+    } else if(plan==='trial'){
+      upgWrap.style.display='';
+      upgWrap.innerHTML=`<div class="asec" style="border-color:var(--g)">
+        <div class="ctitle" style="color:var(--gt)">⭐ Upgrade to Premium</div>
+        <p style="font-size:13px;color:var(--t2);margin-bottom:12px">Your free trial ends in <strong>${days} days</strong>. Upgrade to keep full access.</p>
+        <div style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.8">
+          ✓ Unlimited group rounds<br>
+          ✓ Unlimited course searches<br>
+          ✓ Full history & charts<br>
+          ✓ Multiple groups
+        </div>
+        <button class="btn btnp" onclick="showUpgradePrompt('groupRounds')">Upgrade — £2.99/month</button>
+        <p style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px">or £19.99/year — save 44%</p>
+      </div>`;
+    } else {
+      upgWrap.style.display='';
+      upgWrap.innerHTML=`<div class="asec" style="border-color:#E6A817">
+        <div class="ctitle" style="color:#7A5200">⭐ You're on the Free plan</div>
+        <div style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.8">
+          ✓ 20 group rounds · ${getGroupRoundCount()} used<br>
+          ✓ 5 course searches/month · ${getMonthSearchCount()} used<br>
+          ✓ Last 10 rounds history<br>
+          ✓ 1 group
+        </div>
+        <button class="btn btnp" onclick="showUpgradePrompt('groupRounds')">Upgrade to Premium — £2.99/month</button>
+        <p style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px">or £19.99/year — save 44%</p>
+      </div>`;
+    }
+  }
   renderAccountGroup();
 }
 
@@ -1306,6 +1449,19 @@ window.saveProfile=async()=>{
     await updateProfile(cu,{displayName:nm});
     up.displayName=nm;up.handicap=hcp;
     $('ava').textContent=nm.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+    // Also update name in all groups this user belongs to
+    const allGroups=window._allGroups||[];
+    for(const g of allGroups){
+      const idx=(g.members||[]).indexOf(cu.uid);
+      if(idx>=0){
+        const newNames=[...(g.memberNames||[])];
+        newNames[idx]=nm;
+        await updateDoc(doc(db,'groups',g.id),{memberNames:newNames});
+        g.memberNames=newNames;
+        if(cg&&cg.id===g.id){cg.memberNames=newNames;}
+      }
+    }
+    updateGroupUI();
     toast('Profile saved! ✓');
   }catch(e){toast('Failed to save','err');}
 };
