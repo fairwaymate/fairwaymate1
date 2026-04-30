@@ -209,13 +209,46 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
     </div>
     <div id="a-signup" class="auth-card" style="display:none">
       <div class="auth-title">Join FairwayMate 🏌️</div>
+      <!-- Trial explainer -->
+      <div style="background:var(--gl);border-radius:var(--rs);padding:14px;margin-bottom:16px;border:.5px solid var(--g)">
+        <div style="font-size:13px;font-weight:700;color:var(--gt);margin-bottom:10px;text-align:center">What you get — completely free</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <!-- Trial column -->
+          <div style="background:var(--g);border-radius:var(--rs);padding:10px">
+            <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.7);letter-spacing:.08em;margin-bottom:6px">FIRST 30 DAYS</div>
+            <div style="font-size:13px;font-weight:700;color:white;margin-bottom:8px">Premium access</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.9);line-height:1.8">
+              ✓ Unlimited rounds<br>
+              ✓ Unlimited searches<br>
+              ✓ Full history<br>
+              ✓ Full charts<br>
+              ✓ Multiple groups
+            </div>
+          </div>
+          <!-- Free column -->
+          <div style="background:rgba(0,0,0,.06);border-radius:var(--rs);padding:10px">
+            <div style="font-size:10px;font-weight:700;color:var(--gt);letter-spacing:.08em;margin-bottom:6px">AFTER 30 DAYS</div>
+            <div style="font-size:13px;font-weight:700;color:var(--gt);margin-bottom:8px">Free plan</div>
+            <div style="font-size:11px;color:var(--t2);line-height:1.8">
+              ✓ 20 group rounds<br>
+              ✓ 5 searches/month<br>
+              ✓ Last 10 rounds<br>
+              ✓ Last 5 charts<br>
+              ✓ 1 group
+            </div>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--gt)">
+          Upgrade to Premium anytime for <strong>£2.99/month</strong>
+        </div>
+      </div>
       <div class="field"><label>Your name</label><input type="text" id="s-name" placeholder="Steve Fletcher"></div>
       <div class="two-col">
         <div class="field"><label>Email</label><input type="email" id="s-email" placeholder="your@email.com"></div>
         <div class="field"><label>Handicap</label><input type="number" id="s-hcp" value="18" min="0" max="54" step="0.1"></div>
       </div>
       <div class="field"><label>Password</label><input type="password" id="s-pass" placeholder="At least 6 characters"></div>
-      <div class="trial-note">✓ 30 days full access free — no credit card needed</div>
+      <div class="trial-note">✓ No credit card needed &nbsp;·&nbsp; ✓ Cancel any time &nbsp;·&nbsp; ✓ 30 days Premium free</div>
       <button class="abtn abtn-g" id="s-btn" onclick="doSignup()">Create free account</button>
       <div class="divider">or</div>
       <button class="abtn abtn-w" onclick="doGoogle()">
