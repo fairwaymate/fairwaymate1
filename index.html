@@ -219,9 +219,9 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
             <div style="font-size:13px;font-weight:700;color:white;margin-bottom:8px">Premium access</div>
             <div style="font-size:11px;color:rgba(255,255,255,.9);line-height:1.8">
               ✓ Unlimited mates rounds<br>
-              ✓ Unlimited searches<br>
-              ✓ Full history<br>
-              ✓ Full charts<br>
+              ✓ Unlimited course searches<br>
+              ✓ Full round history<br>
+              ✓ Full score charts<br>
               ✓ Multiple mates groups
             </div>
           </div>
@@ -231,7 +231,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
             <div style="font-size:13px;font-weight:700;color:var(--gt);margin-bottom:8px">Free plan</div>
             <div style="font-size:11px;color:var(--t2);line-height:1.8">
               ✓ 20 mates rounds<br>
-              ✓ 5 searches/month<br>
+              ✓ 5 course searches/month<br>
               ✓ Last 10 rounds<br>
               ✓ Last 5 charts<br>
               ✓ 1 mates group
@@ -277,8 +277,8 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
   </div>
   <div class="tabs">
     <button class="tab active" data-t="entry" onclick="switchTab('entry')">Record</button>
-    <button class="tab" data-t="history" onclick="switchTab('history')">History</button>
-    <button class="tab" data-t="charts" onclick="switchTab('charts')">Charts</button>
+    <button class="tab" data-t="history" onclick="switchTab('history')">Round History</button>
+    <button class="tab" data-t="charts" onclick="switchTab('charts')">Score Charts</button>
     <button class="tab" data-t="account" onclick="switchTab('account')">Account</button>
   </div>
   <div class="main">
@@ -354,7 +354,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
         <button class="fb" id="hp-solo" onclick="setHP('solo')">Solo rounds</button>
         <button class="fb" id="hp-mates" onclick="setHP('mates')">Mates rounds</button>
       </div>
-      <div id="hist-content"><div class="empty"><div class="eico">📋</div>No rounds yet.</div></div>
+      <div id="hist-content"><div class="empty"><div class="eico">📋</div>No rounds yet — save your first round to see your history.</div></div>
     </div>
     <!-- CHARTS TAB -->
     <div id="pn-charts" class="panel">
@@ -362,7 +362,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
         <button class="fb active" id="cc-all" onclick="setCC('all')">All courses</button>
       </div>
       <div class="frow" id="chart-player-filters"></div>
-      <div id="chart-content"><div class="empty"><div class="eico">📊</div>No rounds yet.</div></div>
+      <div id="chart-content"><div class="empty"><div class="eico">📊</div>No rounds yet — play a round to see your score charts.</div></div>
     </div>
     <!-- ACCOUNT TAB -->
     <div id="pn-account" class="panel">
@@ -810,7 +810,7 @@ function doSearch(){
     if(!cs.length){r.innerHTML='<div class="srst">No courses found. Try adding the country.</div>';return;}
     incSearch();
     window._sr=cs.slice(0,15);
-    if(!isPremium()){var rem=getLimit('searches')-searchCount();if(rem<=1)r.innerHTML='<div style="background:var(--gl);border-radius:var(--rs);padding:8px 12px;font-size:12px;color:var(--gt);margin-bottom:6px">⚠️ '+rem+' free search'+(rem!==1?'es':'')+' remaining this month</div>';}
+    if(!isPremium()){var rem=getLimit('searches')-searchCount();if(rem<=1)r.innerHTML='<div style="background:var(--gl);border-radius:var(--rs);padding:8px 12px;font-size:12px;color:var(--gt);margin-bottom:6px">⚠️ '+rem+' free course search'+(rem!==1?'es':'')+' remaining this month</div>';}
     else r.innerHTML='';
     r.innerHTML+=cs.slice(0,15).map(function(c,i){var loc=[c.location&&c.location.city,c.location&&c.location.country].filter(function(v){return v&&v!=='Unknown';}).join(', ');var n=(c.tees&&(c.tees.male||c.tees.female||[])[0]&&(c.tees.male||c.tees.female||[])[0].number_of_holes)||'';return'<div class="sri" onclick="loadCourse('+i+')"><div class="srn">'+(c.club_name||'Unknown')+'</div><div class="srs">'+loc+(n?' · '+n+' holes':'')+'</div></div>';}).join('');
   }).catch(function(){r.innerHTML='<div class="srst">Search failed — check your connection.</div>';});
@@ -1054,7 +1054,7 @@ function renderHist(){
     var cards=uids.map(function(uid,i){var p=pd[uid]||{};var col=COLORS[i%COLORS.length];return'<div class="rp"><div class="rpn" style="color:'+col+'">'+(p.name||'Player'+(i+1))+'</div><div class="rpd2">Gross: '+(p.gross||'—')+' · Net: '+(p.net!==undefined?p.net:'—')+' · Stab: '+(p.stab||0)+'</div>'+(!isSolo&&r.holeWins&&r.holeWins[uid]!==undefined?'<div class="rpi">'+r.holeWins[uid]+' hole'+(r.holeWins[uid]!==1?'s':'')+' won</div>':'')+'</div>';}).join('');
     return'<div class="rcard"><div class="rhdr"><div class="rdate">'+fd(r.date)+'</div>'+pill+'</div><div class="rcrs">⛳ '+(r.courseName||'Unknown')+'</div><div class="rscores '+scls+'">'+cards+'</div><div class="rbtns"><button class="rbtn rbv" onclick="viewRound(\''+r.id+'\')">View scorecard</button><button class="rbtn rbd" onclick="delRound(\''+r.id+'\')">Delete</button></div></div>';
   }).join('');
-  if(isLimited){ct.innerHTML+='<div style="background:var(--gl);border:.5px solid var(--g);border-radius:var(--r);padding:16px;text-align:center;margin-top:8px"><div style="font-size:14px;font-weight:600;color:var(--gt);margin-bottom:6px">📋 Older rounds hidden</div><div style="font-size:13px;color:var(--gt);margin-bottom:12px;opacity:.8">Upgrade to Premium to see your full history</div><button class="btn btnp" style="margin:0" onclick="showUpgrade(\'groupRounds\')">Upgrade to Premium — £2.99/month</button></div>';}
+  if(isLimited){ct.innerHTML+='<div style="background:var(--gl);border:.5px solid var(--g);border-radius:var(--r);padding:16px;text-align:center;margin-top:8px"><div style="font-size:14px;font-weight:600;color:var(--gt);margin-bottom:6px">📋 Older rounds hidden in round history</div><div style="font-size:13px;color:var(--gt);margin-bottom:12px;opacity:.8">Upgrade to Premium to see your full round history</div><button class="btn btnp" style="margin:0" onclick="showUpgrade(\'groupRounds\')">Upgrade to Premium — £2.99/month</button></div>';}
 }
 
 function delRound(id){
@@ -1108,7 +1108,7 @@ function renderCharts(){
   var chartLimit=getLimit('charts');
   var isLimited=!isPremium()&&rs.length>chartLimit;
   if(isLimited)rs=rs.slice(0,chartLimit);
-  if(!rs.length){ct.innerHTML='<div class="empty"><div class="eico">📊</div>No rounds yet.</div>';return;}
+  if(!rs.length){ct.innerHTML='<div class="empty"><div class="eico">📊</div>No rounds yet — play a round to see your score charts.</div>';return;}
   var ms=getMembers();
   var showMs=cpf==='all'?ms:ms.filter(function(m){return m.uid===cpf;});
   var labels=rs.map(function(r){try{var p=(r.date||'').split('-');return p[2]+'/'+p[1]+'/'+p[0].slice(2);}catch(e){return r.date||'';}});
@@ -1116,7 +1116,7 @@ function renderCharts(){
   var gc=isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.06)',tc=isDark?'#aaa9a3':'#666660';
   var stabD={},grossD={};showMs.forEach(function(m){stabD[m.uid]=[];grossD[m.uid]=[];});
   rs.forEach(function(r){showMs.forEach(function(m){var plays=(r.playerIds||Object.keys(r.playerData||{})).indexOf(m.uid)>=0;var p=r.playerData&&r.playerData[m.uid];stabD[m.uid].push(plays&&p?p.stab:null);grossD[m.uid].push(plays&&p&&p.gross?p.gross:null);});});
-  ct.innerHTML=(isLimited?'<div style="background:#FFF8E7;border:.5px solid #E6A817;border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;font-size:13px;color:#7A5200">📊 Showing last '+chartLimit+' rounds. <a onclick="showUpgrade(\'groupRounds\')" style="font-weight:600;cursor:pointer;color:var(--gt)">Upgrade for full charts →</a></div>':'')+
+  ct.innerHTML=(isLimited?'<div style="background:#FFF8E7;border:.5px solid #E6A817;border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;font-size:13px;color:#7A5200">📊 Showing last '+chartLimit+' rounds. <a onclick="showUpgrade(\'groupRounds\')" style="font-weight:600;cursor:pointer;color:var(--gt)">Upgrade for full score charts →</a></div>':'')+
     '<div class="leg">'+showMs.map(function(m){return'<span><span class="lsq" style="background:'+mColor(m.uid)+'"></span>'+m.name+'</span>';}).join('')+'</div>'+
     '<div class="csec"><div class="cttl">Stableford points per round</div><div class="cwrap"><canvas id="ch-s"></canvas></div></div>'+
     '<div class="csec"><div class="cttl">Gross score per round</div><div class="cwrap"><canvas id="ch-g"></canvas></div></div>';
@@ -1158,8 +1158,8 @@ function renderUpgradeSection(){
   var plan=getPlan(),days=trialDays();
   if(plan==='premium'){wrap.style.display='none';return;}
   wrap.style.display='';
-  if(plan==='trial'){wrap.innerHTML='<div class="asec" style="border-color:var(--g)"><div class="ctitle" style="color:var(--gt)">⭐ Upgrade to Premium</div><p style="font-size:13px;color:var(--t2);margin-bottom:12px">Your free trial ends in <strong>'+days+' days</strong>. Upgrade to keep full access.</p><div style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.8">✓ Unlimited group rounds<br>✓ Unlimited course searches<br>✓ Full history &amp; charts<br>✓ Multiple mates groups</div><button class="btn btnp" onclick="showUpgrade(\'groupRounds\')">Upgrade — £2.99/month</button><p style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px">or £19.99/year — save 44%</p></div>';}
-  else{wrap.innerHTML='<div class="asec" style="border-color:#E6A817"><div class="ctitle" style="color:#7A5200">⭐ You\'re on the Free plan</div><div style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.8">✓ 20 mates rounds &middot; '+groupRoundCount()+' used<br>✓ 5 course searches/month · '+searchCount()+' used<br>✓ Last 10 rounds history<br>✓ 1 mates group</div><button class="btn btnp" onclick="showUpgrade(\'groupRounds\')">Upgrade to Premium — £2.99/month</button><p style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px">or £19.99/year — save 44%</p></div>';}
+  if(plan==='trial'){wrap.innerHTML='<div class="asec" style="border-color:var(--g)"><div class="ctitle" style="color:var(--gt)">⭐ Upgrade to Premium</div><p style="font-size:13px;color:var(--t2);margin-bottom:12px">Your free trial ends in <strong>'+days+' days</strong>. Upgrade to keep full access.</p><div style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.8">✓ Unlimited group rounds<br>✓ Unlimited course searches<br>✓ Full round history &amp; score charts<br>✓ Multiple mates groups</div><button class="btn btnp" onclick="showUpgrade(\'groupRounds\')">Upgrade — £2.99/month</button><p style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px">or £19.99/year — save 44%</p></div>';}
+  else{wrap.innerHTML='<div class="asec" style="border-color:#E6A817"><div class="ctitle" style="color:#7A5200">⭐ You\'re on the Free plan</div><div style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.8">✓ 20 mates rounds &middot; '+groupRoundCount()+' used<br>✓ 5 course searches/month · '+searchCount()+' used<br>✓ Last 10 rounds of history<br>✓ 1 mates group</div><button class="btn btnp" onclick="showUpgrade(\'groupRounds\')">Upgrade to Premium — £2.99/month</button><p style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px">or £19.99/year — save 44%</p></div>';}
 }
 
 function saveProfile(){
