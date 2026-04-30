@@ -278,7 +278,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
     </div>
   </div>
   <div class="tabs">
-    <button class="tab active" data-t="entry" onclick="switchTab('entry')">Record</button>
+    <button class="tab active" data-t="entry" onclick="switchTab('entry')">Round Record</button>
     <button class="tab" data-t="history" onclick="switchTab('history')">Round History</button>
     <button class="tab" data-t="charts" onclick="switchTab('charts')">Score Charts</button>
     <button class="tab" data-t="account" onclick="switchTab('account')">Account</button>
@@ -311,13 +311,13 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
         </div>
       </div>
       <div class="card">
-        <div class="ctitle">Round type</div>
+        <div class="ctitle">Solo or with your mates?</div>
         <div class="prow">
-          <button class="mpill active" id="mp-mates" onclick="setMode('mates')">👥 Mates round</button>
+          <button class="mpill active" id="mp-mates" onclick="setMode('mates')">👥 With your mates</button>
           <button class="mpill" id="mp-solo" onclick="setMode('solo')">🏌️ Solo round</button>
         </div>
         <div id="player-sel-wrap">
-          <div class="slbl" id="player-sel-lbl">Who is playing? <span style="color:var(--t3)">(max 5)</span></div>
+          <div class="slbl" id="player-sel-lbl">Who's playing? <span style="color:var(--t3)">(select up to 5 mates)</span></div>
           <div class="player-pills" id="player-pills"></div>
         </div>
       </div>
@@ -729,11 +729,11 @@ function buildPlayerPills(){
   var lbl=$('player-sel-lbl');
   if(!ms.length){wrap.innerHTML='<p style="font-size:13px;color:var(--t2)">Create or join a group to select players.</p>';return;}
   if(rm==='solo'){
-    if(lbl)lbl.textContent='Who is playing solo?';
+    if(lbl)lbl.textContent='Who is playing the solo round?';
     if(!selectedPlayers.length||selectedPlayers.length>1)selectedPlayers=[cu?cu.uid:ms[0].uid];
     wrap.innerHTML=ms.map(function(m){return'<button class="ppill'+(selectedPlayers.indexOf(m.uid)>=0?' sel-solo':'')+(m.isMe?' me':'')+'" onclick="togglePlayer(\''+m.uid+'\')">'+m.name+(m.isMe?' (you)':'')+'</button>';}).join('');
   } else {
-    if(lbl)lbl.innerHTML='Who is playing? <span style="color:var(--t3)">(max 5)</span>';
+    if(lbl)lbl.innerHTML='Who's playing? <span style="color:var(--t3)">(select up to 5 mates)</span>';
     if(!selectedPlayers.length)selectedPlayers=ms.map(function(m){return m.uid;});
     wrap.innerHTML=ms.map(function(m){return'<button class="ppill'+(selectedPlayers.indexOf(m.uid)>=0?' sel':'')+(m.isMe?' me':'')+'" onclick="togglePlayer(\''+m.uid+'\')">'+m.name+(m.isMe?' (you)':'')+'</button>';}).join('');
   }
