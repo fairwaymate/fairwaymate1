@@ -733,7 +733,7 @@ function buildPlayerPills(){
     if(!selectedPlayers.length||selectedPlayers.length>1)selectedPlayers=[cu?cu.uid:ms[0].uid];
     wrap.innerHTML=ms.map(function(m){return'<button class="ppill'+(selectedPlayers.indexOf(m.uid)>=0?' sel-solo':'')+(m.isMe?' me':'')+'" onclick="togglePlayer(\''+m.uid+'\')">'+m.name+(m.isMe?' (you)':'')+'</button>';}).join('');
   } else {
-    if(lbl)lbl.innerHTML='Who's playing? <span style="color:var(--t3)">(select up to 5 mates)</span>';
+    if(lbl)lbl.innerHTML='Who is playing? <span style="color:var(--t3)">(select up to 5 mates)</span>';
     if(!selectedPlayers.length)selectedPlayers=ms.map(function(m){return m.uid;});
     wrap.innerHTML=ms.map(function(m){return'<button class="ppill'+(selectedPlayers.indexOf(m.uid)>=0?' sel':'')+(m.isMe?' me':'')+'" onclick="togglePlayer(\''+m.uid+'\')">'+m.name+(m.isMe?' (you)':'')+'</button>';}).join('');
   }
