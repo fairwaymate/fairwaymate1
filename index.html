@@ -218,6 +218,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
             <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.7);letter-spacing:.08em;margin-bottom:6px">FIRST 30 DAYS</div>
             <div style="font-size:13px;font-weight:700;color:white;margin-bottom:8px">Premium access</div>
             <div style="font-size:11px;color:rgba(255,255,255,.9);line-height:1.8">
+              ✓ Unlimited solo rounds<br>
               ✓ Unlimited mates rounds<br>
               ✓ Unlimited course searches<br>
               ✓ Full round history<br>
@@ -230,10 +231,11 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
             <div style="font-size:10px;font-weight:700;color:var(--gt);letter-spacing:.08em;margin-bottom:6px">AFTER 30 DAYS</div>
             <div style="font-size:13px;font-weight:700;color:var(--gt);margin-bottom:8px">Free plan</div>
             <div style="font-size:11px;color:var(--t2);line-height:1.8">
+              ✓ Unlimited solo rounds<br>
               ✓ 20 mates rounds<br>
               ✓ 5 course searches/month<br>
-              ✓ Last 10 rounds<br>
-              ✓ Last 5 charts<br>
+              ✓ Last 10 rounds of history<br>
+              ✓ Last 5 score charts<br>
               ✓ 1 mates group
             </div>
           </div>
@@ -476,7 +478,7 @@ function groupRoundCount(){return rounds.filter(function(r){return r.mode!=='sol
 function searchCount(){var k='fm-srch-'+new Date().toISOString().slice(0,7)+'-'+(cu?cu.uid:'');return parseInt(localStorage.getItem(k)||'0');}
 function incSearch(){var k='fm-srch-'+new Date().toISOString().slice(0,7)+'-'+(cu?cu.uid:'');localStorage.setItem(k,String(searchCount()+1));}
 function showUpgrade(reason){
-  var msgs={groupRounds:'You\'ve used all 20 free group rounds. Upgrade to Premium for unlimited! 🏌️',searches:'You\'ve used all 5 free course searches this month. Upgrade for unlimited! 🔍',groups:'Free plan is limited to 1 group. Upgrade for unlimited groups! 👥'};
+  var msgs={groupRounds:'You\'ve used all 20 free mates rounds. Upgrade to Premium for unlimited! 🏌️',searches:'You\'ve used all 5 free course searches this month. Upgrade for unlimited! 🔍',groups:'Free plan is limited to 1 mates group. Upgrade for unlimited mates groups! 👥'};
   if(confirm((msgs[reason]||'Upgrade to FairwayMate Premium!')+'\n\nUpgrade for £2.99/month — tap OK to find out more.')){alert('Premium coming soon! 🚀\n\nYou\'ll be able to upgrade for £2.99/month or £19.99/year.\nWe\'ll notify you when payments are live.');}
 }
 
@@ -1158,8 +1160,8 @@ function renderUpgradeSection(){
   var plan=getPlan(),days=trialDays();
   if(plan==='premium'){wrap.style.display='none';return;}
   wrap.style.display='';
-  if(plan==='trial'){wrap.innerHTML='<div class="asec" style="border-color:var(--g)"><div class="ctitle" style="color:var(--gt)">⭐ Upgrade to Premium</div><p style="font-size:13px;color:var(--t2);margin-bottom:12px">Your free trial ends in <strong>'+days+' days</strong>. Upgrade to keep full access.</p><div style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.8">✓ Unlimited group rounds<br>✓ Unlimited course searches<br>✓ Full round history &amp; score charts<br>✓ Multiple mates groups</div><button class="btn btnp" onclick="showUpgrade(\'groupRounds\')">Upgrade — £2.99/month</button><p style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px">or £19.99/year — save 44%</p></div>';}
-  else{wrap.innerHTML='<div class="asec" style="border-color:#E6A817"><div class="ctitle" style="color:#7A5200">⭐ You\'re on the Free plan</div><div style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.8">✓ 20 mates rounds &middot; '+groupRoundCount()+' used<br>✓ 5 course searches/month · '+searchCount()+' used<br>✓ Last 10 rounds of history<br>✓ 1 mates group</div><button class="btn btnp" onclick="showUpgrade(\'groupRounds\')">Upgrade to Premium — £2.99/month</button><p style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px">or £19.99/year — save 44%</p></div>';}
+  if(plan==='trial'){wrap.innerHTML='<div class="asec" style="border-color:var(--g)"><div class="ctitle" style="color:var(--gt)">⭐ Upgrade to Premium</div><p style="font-size:13px;color:var(--t2);margin-bottom:12px">Your free trial ends in <strong>'+days+' days</strong>. Upgrade to keep full access.</p><div style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.8">✓ Unlimited solo rounds<br>✓ Unlimited mates rounds<br>✓ Unlimited course searches<br>✓ Full round history &amp; score charts<br>✓ Multiple mates groups</div><button class="btn btnp" onclick="showUpgrade(\'groupRounds\')">Upgrade — £2.99/month</button><p style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px">or £19.99/year — save 44%</p></div>';}
+  else{wrap.innerHTML='<div class="asec" style="border-color:#E6A817"><div class="ctitle" style="color:#7A5200">⭐ You\'re on the Free plan</div><div style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.8">✓ Unlimited solo rounds<br>✓ 20 mates rounds &middot; '+groupRoundCount()+' used<br>✓ 5 course searches/month &middot; '+searchCount()+' used<br>✓ Last 10 rounds of history<br>✓ Last 5 score charts<br>✓ 1 mates group</div><button class="btn btnp" onclick="showUpgrade(\'groupRounds\')">Upgrade to Premium — £2.99/month</button><p style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px">or £19.99/year — save 44%</p></div>';}
 }
 
 function saveProfile(){
