@@ -290,7 +290,13 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
       <div id="grp-yes" style="display:none">
         <div class="grp-box">
           <div class="grp-top">
-            <div><div class="grp-name" id="grp-name">My Mates Groups</div><div class="grp-mem" id="grp-mem"></div></div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div id="grp-ava" style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0"><span style="font-size:18px">👥</span></div>
+              <div>
+                <div class="grp-name" id="grp-name">My Mates Group</div>
+                <div class="grp-mem" id="grp-mem"></div>
+              </div>
+            </div>
             <button class="grp-manage-btn" onclick="switchTab('account')">Switch mates group</button>
           </div>
         </div>
@@ -427,6 +433,24 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
     <button class="abtn abtn-w" onclick="hideInvite()" style="margin-top:4px">Done</button>
   </div>
 </div>
+<!-- EDIT GROUP MODAL -->
+<div class="ovl" id="ovl-edit-grp" onclick="if(event.target===this)hideEditGroup()">
+  <div class="ocard">
+    <div class="otitle">Edit mates group</div>
+    <input type="hidden" id="edit-grp-id">
+    <!-- Group photo -->
+    <div style="text-align:center;margin-bottom:16px">
+      <div id="edit-grp-photo-preview" style="width:72px;height:72px;border-radius:50%;background:var(--gl);border:.5px solid var(--g);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;overflow:hidden;cursor:pointer" onclick="uploadGroupPhoto($('edit-grp-id').value)">
+        <span style="font-size:28px">👥</span>
+      </div>
+      <p style="font-size:12px;color:var(--t2)">Tap to change group photo</p>
+    </div>
+    <input type="file" id="edit-grp-photo-input" accept="image/*" style="display:none" onchange="handleGroupPhotoSelected(event)">
+    <div class="field"><label>Group name</label><input type="text" id="edit-grp-name" placeholder="e.g. Sunday Morning Four"></div>
+    <button class="abtn abtn-g" id="edit-grp-btn" onclick="saveEditGroup()">Save changes</button>
+    <button class="abtn abtn-w" onclick="hideEditGroup()">Cancel</button>
+  </div>
+</div>
 <!-- JOIN BY CODE -->
 <div class="ovl" id="ovl-code" onclick="if(event.target===this)hideCodeModal()">
   <div class="ocard">
@@ -554,6 +578,12 @@ function updateGroupUI(){
     $('grp-yes').style.display='';$('grp-no').style.display='none';
     $('grp-name').textContent=cg.name;
     $('grp-mem').textContent=(cg.memberNames||[]).join(', ')+' · '+(cg.memberNames||[]).length+' member'+((cg.memberNames||[]).length!==1?'s':'');
+    // Show group photo if available
+    var gava=$('grp-ava');
+    if(gava){
+      if(cg.photoURL){gava.innerHTML='<img src="'+cg.photoURL+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';}
+      else{gava.innerHTML='<span style="font-size:16px">👥</span>';}
+    }
   } else {
     $('grp-yes').style.display='none';$('grp-no').style.display='';
   }
@@ -678,7 +708,89 @@ function switchGroup(gid){
   cg=g;localStorage.setItem('fm-grp-'+cu.uid,gid);
   if(unsubRounds)unsubRounds();rounds=[];subRounds();
   updateGroupUI();buildPlayerPills();buildCourseSelector();ac=null;buildSC();
+  renderAccGroup();
   toast('Switched to "'+g.name+'"');
+}
+
+function showEditGroup(gid){
+  var g=allGroups.find(function(x){return x.id===gid;});
+  if(!g)return;
+  if(cu.uid!==g.createdBy){toast('Only the group creator can edit','info');return;}
+  $('edit-grp-id').value=gid;
+  $('edit-grp-name').value=g.name;
+  var preview=$('edit-grp-photo-preview');
+  if(preview){
+    if(g.photoURL){preview.innerHTML='<img src="'+g.photoURL+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';}
+    else{preview.innerHTML='<span style="font-size:28px">👥</span>';}
+  }
+  $('ovl-edit-grp').style.display='flex';
+}
+function hideEditGroup(){$('ovl-edit-grp').style.display='none';}
+
+function saveEditGroup(){
+  var gid=$('edit-grp-id').value;
+  var nm=$('edit-grp-name').value.trim();
+  if(!nm){toast('Please enter a group name','err');return;}
+  var g=allGroups.find(function(x){return x.id===gid;});
+  if(!g)return;
+  setLoading('edit-grp-btn',true,'Save changes');
+  db.collection('groups').doc(gid).update({name:nm}).then(function(){
+    g.name=nm;
+    if(cg&&cg.id===gid)cg.name=nm;
+    updateGroupUI();renderAccGroup();
+    toast('Group updated! ✓');
+    hideEditGroup();
+  }).catch(function(e){toast('Failed to update group','err');console.error(e);
+  }).finally(function(){setLoading('edit-grp-btn',false,'Save changes');});
+}
+
+function uploadGroupPhoto(gid){
+  var inp=$('edit-grp-photo-input');
+  if(!inp)return;
+  inp.setAttribute('data-gid',gid);
+  inp.click();
+}
+
+function handleGroupPhotoSelected(evt){
+  var file=evt.target.files&&evt.target.files[0];
+  var gid=evt.target.getAttribute('data-gid');
+  if(!file||!gid)return;
+  var g=allGroups.find(function(x){return x.id===gid;});
+  if(!g)return;
+  // Show preview
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var preview=$('edit-grp-photo-preview');
+    if(preview)preview.innerHTML='<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+  };
+  reader.readAsDataURL(file);
+  // Compress and upload
+  var imgEl=new Image();
+  var objUrl=URL.createObjectURL(file);
+  imgEl.onload=function(){
+    var canvas=document.createElement('canvas');
+    var size=300;
+    var scale=Math.min(size/imgEl.width,size/imgEl.height,1);
+    canvas.width=Math.round(imgEl.width*scale);
+    canvas.height=Math.round(imgEl.height*scale);
+    canvas.getContext('2d').drawImage(imgEl,0,0,canvas.width,canvas.height);
+    URL.revokeObjectURL(objUrl);
+    canvas.toBlob(function(blob){
+      if(!blob)return;
+      toast('Uploading group photo...','info');
+      storage.ref().child('groups/'+gid+'/photo.jpg').put(blob,{contentType:'image/jpeg'}).then(function(snap){
+        return snap.ref.getDownloadURL();
+      }).then(function(url){
+        return db.collection('groups').doc(gid).update({photoURL:url}).then(function(){
+          g.photoURL=url;
+          if(cg&&cg.id===gid)cg.photoURL=url;
+          updateGroupUI();renderAccGroup();
+          toast('Group photo updated! 📷');
+        });
+      }).catch(function(e){toast('Failed to upload photo','err');console.error(e);});
+    },'image/jpeg',0.85);
+  };
+  imgEl.src=objUrl;
 }
 
 function removeMember(uid){
@@ -1155,10 +1267,24 @@ function renderAccGroup(){
   var isCreator=cg&&cu.uid===cg.createdBy;
   var groupList=allGroups.map(function(g){
     var isActive=cg&&g.id===cg.id;
-    var icon=isActive?'<span style="color:white;font-size:14px">✓</span>':'<span style="font-size:14px">👥</span>';
-    var circle='<div style="width:36px;height:36px;border-radius:50%;background:'+(isActive?'var(--g)':'var(--bg)')+';border:.5px solid var(--bdr);display:flex;align-items:center;justify-content:center;flex-shrink:0">'+icon+'</div>';
-    var badge=isActive?'<span style="font-size:11px;background:var(--gl);color:var(--gt);padding:4px 10px;border-radius:20px;font-weight:600;flex-shrink:0">Active</span>':'<span style="font-size:11px;color:var(--t3);flex-shrink:0">Tap to switch</span>';
-    return'<div class="member-row" style="cursor:pointer;padding:10px 0" onclick="switchGroup(\''+g.id+'\')"><div style="display:flex;align-items:center;gap:10px;width:100%">'+circle+'<div style="flex:1"><div class="member-info" style="color:'+(isActive?'var(--gt)':'var(--t)')+';font-weight:'+(isActive?700:500)+'">'+g.name+'</div><div class="member-sub">'+(g.memberNames||[]).length+' member'+(((g.memberNames||[]).length)!==1?'s':'')+' · Invite code: '+(g.inviteCode||'------')+'</div></div>'+badge+'</div></div>';
+    var isCreatorOfG=cu.uid===g.createdBy;
+    var photo=g.photoURL?'<img src="'+g.photoURL+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':'<span style="font-size:16px">👥</span>';
+    var circle='<div style="width:40px;height:40px;border-radius:50%;background:'+(isActive?'var(--g)':'var(--bg)')+';border:.5px solid '+(isActive?'var(--g)':'var(--bdr)')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">'+photo+'</div>';
+    var badge=isActive?'<span style="font-size:11px;background:var(--gl);color:var(--gt);padding:4px 10px;border-radius:20px;font-weight:600;flex-shrink:0">✓ Active</span>':'<span style="font-size:11px;color:var(--t3);flex-shrink:0">Tap to switch</span>';
+    var editBtn=isCreatorOfG?'<button style="padding:4px 10px;border-radius:var(--rs);border:.5px solid var(--bdm);background:none;color:var(--t2);font-size:11px;cursor:pointer;font-family:inherit;margin-left:6px" onclick="event.stopPropagation();showEditGroup(\''+g.id+'\')">Edit</button>':'';
+    return'<div class="member-row" style="cursor:pointer;padding:10px 0" onclick="switchGroup(\''+g.id+'\')">'+
+      '<div style="display:flex;align-items:center;gap:10px;width:100%">'+
+        circle+
+        '<div style="flex:1">'+
+          '<div style="display:flex;align-items:center">'+
+            '<div class="member-info" style="color:'+(isActive?'var(--gt)':'var(--t)')+';font-weight:'+(isActive?700:500)+'">'+g.name+'</div>'+
+            editBtn+
+          '</div>'+
+          '<div class="member-sub">'+(g.memberNames||[]).length+' member'+(((g.memberNames||[]).length)!==1?'s':'')+' · Code: '+(g.inviteCode||'------')+'</div>'+
+        '</div>'+
+        badge+
+      '</div>'+
+    '</div>';
   }).join('');
   var memberRows='';
   if(cg){var ms=getMembers();memberRows=ms.map(function(m,i){return'<div class="member-row"><div><div class="member-info" style="color:'+COLORS[i%COLORS.length]+'">'+m.name+(m.isMe?' (you)':'')+(cg.createdBy===m.uid?' 👑':'')+'</div><div class="member-sub">'+((cg.memberEmails||[])[i]||'')+'</div></div>'+(isCreator&&!m.isMe?'<button class="btn-sm-red" onclick="removeMember(\''+m.uid+'\')">Remove</button>':'')+'</div>';}).join('');}
