@@ -278,7 +278,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
     </div>
   </div>
   <div class="tabs">
-    <button class="tab active" data-t="entry" onclick="switchTab('entry')">Round Record</button>
+    <button class="tab active" data-t="entry" onclick="switchTab('entry')">Scorecard</button>
     <button class="tab" data-t="history" onclick="switchTab('history')">Round History</button>
     <button class="tab" data-t="charts" onclick="switchTab('charts')">Score Charts</button>
     <button class="tab" data-t="account" onclick="switchTab('account')">Account</button>
@@ -616,16 +616,16 @@ function createGroup(){
   setLoading('cg-btn',true,'Create mates group');
   var code=genCode();
   db.collection('groups').add({name:nm,createdBy:cu.uid,members:[cu.uid],memberNames:[up.displayName],memberEmails:[cu.email.toLowerCase()],inviteCode:code,createdAt:firebase.firestore.FieldValue.serverTimestamp()}).then(function(ref){
-    return db.collection('users').doc(cu.uid).update({groupId:ref.id}).then(function(){
-      var ng={id:ref.id,name:nm,createdBy:cu.uid,members:[cu.uid],memberNames:[up.displayName],memberEmails:[cu.email.toLowerCase()],inviteCode:code};
-      cg=ng;allGroups.unshift(ng);
-      localStorage.setItem('fm-grp-'+cu.uid,ref.id);
-      if(unsubRounds)unsubRounds();rounds=[];subRounds();
-      updateGroupUI();buildPlayerPills();buildCourseSelector();
-      toast('Mates group "'+nm+'" created! 🎉');
-      hideCreateGrp();
-      switchTab('account');
-    });
+    var ng={id:ref.id,name:nm,createdBy:cu.uid,members:[cu.uid],memberNames:[up.displayName],memberEmails:[cu.email.toLowerCase()],inviteCode:code};
+    cg=ng;allGroups.unshift(ng);
+    localStorage.setItem('fm-grp-'+cu.uid,ref.id);
+    if(unsubRounds)unsubRounds();rounds=[];subRounds();
+    updateGroupUI();buildPlayerPills();buildCourseSelector();
+    toast('Mates group "'+nm+'" created! 🎉');
+    hideCreateGrp();
+    switchTab('account');
+    // Update user doc in background — non-critical if it fails
+    db.collection('users').doc(cu.uid).update({groupId:ref.id}).catch(function(e){console.log('User groupId update failed (non-critical):',e);});
   }).catch(function(e){toast('Failed to create mates group','err');console.error(e);}).finally(function(){setLoading('cg-btn',false,'Create mates group');});
 }
 
