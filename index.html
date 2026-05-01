@@ -436,19 +436,46 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
 <!-- EDIT GROUP MODAL -->
 <div class="ovl" id="ovl-edit-grp" onclick="if(event.target===this)hideEditGroup()">
   <div class="ocard">
-    <div class="otitle">Edit mates group</div>
+    <div class="mhdr" style="margin-bottom:16px">
+      <div class="mtitle">Manage mates group</div>
+      <button class="mclose" onclick="hideEditGroup()">✕</button>
+    </div>
     <input type="hidden" id="edit-grp-id">
     <!-- Group photo -->
     <div style="text-align:center;margin-bottom:16px">
       <div id="edit-grp-photo-preview" style="width:72px;height:72px;border-radius:50%;background:var(--gl);border:.5px solid var(--g);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;overflow:hidden;cursor:pointer" onclick="uploadGroupPhoto($('edit-grp-id').value)">
         <span style="font-size:28px">👥</span>
       </div>
-      <p style="font-size:12px;color:var(--t2)">Tap to change group photo</p>
+      <p style="font-size:12px;color:var(--t2)">Tap photo to change</p>
     </div>
     <input type="file" id="edit-grp-photo-input" accept="image/*" style="display:none" onchange="handleGroupPhotoSelected(event)">
+    <!-- Group name -->
     <div class="field"><label>Group name</label><input type="text" id="edit-grp-name" placeholder="e.g. Sunday Morning Four"></div>
-    <button class="abtn abtn-g" id="edit-grp-btn" onclick="saveEditGroup()">Save changes</button>
-    <button class="abtn abtn-w" onclick="hideEditGroup()">Cancel</button>
+    <button class="abtn abtn-g" id="edit-grp-btn" onclick="saveEditGroup()">Save name</button>
+    <!-- Invite code -->
+    <div style="margin:16px 0 8px">
+      <div class="ctitle">Invite code</div>
+      <div class="invite-code-box" style="margin-bottom:8px">
+        <div class="invite-code-label">SHARE THIS CODE WITH YOUR MATES</div>
+        <div id="edit-grp-code" class="invite-code-val">------</div>
+      </div>
+      <button class="abtn wa-btn" onclick="inviteWhatsAppFromEdit()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Invite a mate via WhatsApp
+      </button>
+    </div>
+    <!-- Members list -->
+    <div style="margin:16px 0 8px">
+      <div class="ctitle">Members</div>
+      <div id="edit-grp-members"></div>
+    </div>
+    <!-- Danger zone -->
+    <div style="margin-top:16px;padding-top:16px;border-top:.5px solid var(--bdr)">
+      <div class="ctitle" style="color:#ef4444">Danger zone</div>
+      <button class="abtn abtn-w" style="border-color:#fca5a5;color:#ef4444;margin-top:8px" onclick="deleteGroup($('edit-grp-id').value)">🗑️ Delete this mates group</button>
+      <p style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px">This cannot be undone. All rounds will be deleted.</p>
+    </div>
+    <button class="abtn abtn-w" onclick="hideEditGroup()" style="margin-top:8px">Close</button>
   </div>
 </div>
 <!-- JOIN BY CODE -->
@@ -715,15 +742,96 @@ function switchGroup(gid){
 function showEditGroup(gid){
   var g=allGroups.find(function(x){return x.id===gid;});
   if(!g)return;
-  if(cu.uid!==g.createdBy){toast('Only the group creator can edit','info');return;}
+  if(cu.uid!==g.createdBy){toast('Only the group creator can manage this group','info');return;}
   $('edit-grp-id').value=gid;
   $('edit-grp-name').value=g.name;
+  var codeEl=$('edit-grp-code');if(codeEl)codeEl.textContent=g.inviteCode||'------';
+  // Group photo
   var preview=$('edit-grp-photo-preview');
   if(preview){
     if(g.photoURL){preview.innerHTML='<img src="'+g.photoURL+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';}
     else{preview.innerHTML='<span style="font-size:28px">👥</span>';}
   }
+  // Members list
+  var mwrap=$('edit-grp-members');
+  if(mwrap){
+    mwrap.innerHTML=(g.members||[]).map(function(uid,i){
+      var nm=(g.memberNames||[])[i]||'Member '+(i+1);
+      var em=(g.memberEmails||[])[i]||'';
+      var isMe=uid===cu.uid;
+      var isCreator=uid===g.createdBy;
+      var photo=memberPhotos[uid];
+      var avatar=photo?'<img src="'+photo+'" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0">':'<div style="width:32px;height:32px;border-radius:50%;background:'+COLORS[i%COLORS.length]+';color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+nm.split(' ').map(function(n){return n[0]||'';}).join('').toUpperCase().slice(0,2)+'</div>';
+      return'<div class="member-row">'+
+        '<div style="display:flex;align-items:center;gap:10px;flex:1">'+
+          avatar+
+          '<div>'+
+            '<div style="font-size:14px;font-weight:500;color:'+COLORS[i%COLORS.length]+'">'+nm+(isMe?' (you)':'')+(isCreator?' 👑':'')+'</div>'+
+            '<div style="font-size:11px;color:var(--t2)">'+em+'</div>'+
+          '</div>'+
+        '</div>'+
+        (!isMe&&!isCreator?'<button class="btn-sm-red" onclick="removeMemberFromEdit(\''+gid+'\',\''+uid+'\')">Remove</button>':'')+
+      '</div>';
+    }).join('');
+  }
   $('ovl-edit-grp').style.display='flex';
+}
+
+function removeMemberFromEdit(gid,uid){
+  var g=allGroups.find(function(x){return x.id===gid;});
+  if(!g)return;
+  var idx=(g.members||[]).indexOf(uid);if(idx<0)return;
+  var nm=(g.memberNames||[])[idx]||'this member';
+  if(!confirm('Remove '+nm+' from '+g.name+'?'))return;
+  var newM=g.members.filter(function(x){return x!==uid;});
+  var newN=(g.memberNames||[]).filter(function(_,i){return i!==idx;});
+  var newE=(g.memberEmails||[]).filter(function(_,i){return i!==idx;});
+  db.collection('groups').doc(gid).update({members:newM,memberNames:newN,memberEmails:newE}).then(function(){
+    return db.collection('users').doc(uid).update({groupId:null});
+  }).then(function(){
+    g.members=newM;g.memberNames=newN;g.memberEmails=newE;
+    if(cg&&cg.id===gid){cg.members=newM;cg.memberNames=newN;cg.memberEmails=newE;}
+    updateGroupUI();renderAccGroup();
+    showEditGroup(gid);
+    toast('Member removed');
+  }).catch(function(e){toast('Failed to remove member','err');console.error(e);});
+}
+
+function inviteWhatsAppFromEdit(){
+  var gid=$('edit-grp-id').value;
+  var g=allGroups.find(function(x){return x.id===gid;});
+  if(!g)return;
+  var code=g.inviteCode||'------';
+  var url=window.location.origin+window.location.pathname+'?join='+code;
+  var msg=encodeURIComponent('Hey! Join my FairwayMate mates group "'+g.name+'" ⛳\n\nTap to join: '+url+'\n\nOr enter code: *'+code+'*\n\nSee you on the fairway! 🏌️');
+  window.open('https://wa.me/?text='+msg,'_blank');
+}
+
+function deleteGroup(gid){
+  var g=allGroups.find(function(x){return x.id===gid;});
+  if(!g)return;
+  if(cu.uid!==g.createdBy){toast('Only the group creator can delete this group','info');return;}
+  if(!confirm('Delete "'+g.name+'"?\n\nThis will permanently delete the group and ALL rounds saved to it. This cannot be undone.'))return;
+  if(!confirm('Are you absolutely sure? All round history will be lost.'))return;
+  // Delete all rounds first then the group
+  db.collection('groups').doc(gid).collection('rounds').get().then(function(snap){
+    var batch=db.batch();
+    snap.docs.forEach(function(d){batch.delete(d.ref);});
+    return batch.commit();
+  }).then(function(){
+    return db.collection('groups').doc(gid).delete();
+  }).then(function(){
+    // Update local state
+    allGroups=allGroups.filter(function(x){return x.id!==gid;});
+    if(cg&&cg.id===gid){
+      cg=allGroups[0]||null;
+      if(cg){localStorage.setItem('fm-grp-'+cu.uid,cg.id);if(unsubRounds)unsubRounds();rounds=[];subRounds();}
+      else{localStorage.removeItem('fm-grp-'+cu.uid);if(unsubRounds)unsubRounds();rounds=[];}
+    }
+    updateGroupUI();buildPlayerPills();buildCourseSelector();renderAccGroup();
+    hideEditGroup();
+    toast('Group deleted');
+  }).catch(function(e){toast('Failed to delete group','err');console.error(e);});
 }
 function hideEditGroup(){$('ovl-edit-grp').style.display='none';}
 
