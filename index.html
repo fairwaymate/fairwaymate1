@@ -1384,11 +1384,12 @@ function renderAccGroup(){
       '<div style="display:flex;align-items:center;gap:10px;width:100%">'+
         circle+
         '<div style="flex:1">'+
-          '<div style="display:flex;align-items:center">'+
+          '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'+
             '<div class="member-info" style="color:'+(isActive?'var(--gt)':'var(--t)')+';font-weight:'+(isActive?700:500)+'">'+g.name+'</div>'+
+            '<span style="background:var(--gl);color:var(--gt);font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:2px">'+(g.inviteCode||'------')+'</span>'+
             editBtn+
           '</div>'+
-          '<div class="member-sub">'+(g.memberNames||[]).length+' member'+(((g.memberNames||[]).length)!==1?'s':'')+' · Code: '+(g.inviteCode||'------')+'</div>'+
+          '<div class="member-sub">'+(g.memberNames||[]).length+' member'+(((g.memberNames||[]).length)!==1?'s':'')+' · Tap to switch</div>'+
         '</div>'+
         badge+
       '</div>'+
