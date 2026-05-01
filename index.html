@@ -341,8 +341,10 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
 
       <!-- STEP 2B: Solo player (solo mode only) -->
       <div id="solo-section" class="card" style="display:none">
-        <div class="ctitle">Step 2 — Who is playing the solo round?</div>
-        <div class="player-pills" id="player-pills"></div>
+        <div class="ctitle">Step 2 — Playing solo</div>
+        <div id="solo-player-display" style="display:flex;align-items:center;gap:10px;padding:8px 0">
+          <!-- Populated by JS -->
+        </div>
       </div>
 
       <!-- STEP 3: Course -->
@@ -615,6 +617,8 @@ function showApp(){
   updateBadge();
   $('r-date').valueAsDate=new Date();
   var gs=$('grp-section');if(gs)gs.style.display='';
+  // Default mode is mates so solo section hidden — but pre-populate it
+  setMode('mates');
   updateGroupUI();
   buildPlayerPills();
   buildHcaps();
@@ -988,8 +992,19 @@ function setMode(m){
   var grpSec=$('grp-section'),soloSec=$('solo-section');
   if(grpSec)grpSec.style.display=m==='mates'?'':'none';
   if(soloSec)soloSec.style.display=m==='solo'?'':'none';
-  if(m==='solo'){selectedPlayers=cu?[cu.uid]:[];}
-  else{selectedPlayers=getMembers().map(function(x){return x.uid;});}
+  if(m==='solo'){
+    selectedPlayers=cu?[cu.uid]:[];
+    // Show signed-in user in solo section
+    var spd=$('solo-player-display');
+    if(spd&&up){
+      var nm=up.displayName||cu.email||'You';
+      var col=COLORS[0];
+      var photo=up.photoURL?'<img src="'+up.photoURL+'" style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0">':'<div style="width:44px;height:44px;border-radius:50%;background:'+col+';color:#fff;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+nm.split(' ').map(function(n){return n[0]||'';}).join('').toUpperCase().slice(0,2)+'</div>';
+      spd.innerHTML=photo+'<div><div style="font-size:15px;font-weight:600;color:'+col+'">'+nm+'</div><div style="font-size:12px;color:var(--t2);margin-top:2px">Playing solo · Handicap updated in Step 4</div></div>';
+    }
+  } else {
+    selectedPlayers=getMembers().map(function(x){return x.uid;});
+  }
   buildPlayerPills();buildHcaps();buildSC();
 }
 
