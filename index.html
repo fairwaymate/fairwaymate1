@@ -624,6 +624,8 @@ function createGroup(){
     toast('Mates group "'+nm+'" created! 🎉');
     hideCreateGrp();
     switchTab('account');
+    // Force refresh account group list
+    setTimeout(function(){renderAccGroup();},100);
     // Update user doc in background — non-critical if it fails
     db.collection('users').doc(cu.uid).update({groupId:ref.id}).catch(function(e){console.log('User groupId update failed (non-critical):',e);});
   }).catch(function(e){toast('Failed to create mates group','err');console.error(e);}).finally(function(){setLoading('cg-btn',false,'Create mates group');});
@@ -1200,6 +1202,115 @@ function saveProfile(){
     });
     return Promise.all(promises);
   }).then(function(){updateGroupUI();buildPlayerPills();updateAvatarUI();toast('Profile saved! ✓');}).catch(function(e){toast('Failed to save','err');console.error(e);});
+}
+
+// ── Photo upload ──────────────────────────────────────────
+var memberPhotos={};
+
+function showPhotoModal(){
+  var wrap=$('ovl-photo');if(!wrap)return;
+  var nm=up?up.displayName:'?';
+  var initials=nm.split(' ').map(function(n){return n[0]||'';}).join('').toUpperCase().slice(0,2)||'?';
+  var pi=$('photo-preview-initials');if(pi)pi.textContent=initials;
+  if(up&&up.photoURL){var pp=$('photo-preview');if(pp){pp.src=up.photoURL;pp.style.display='';if(pi)pi.style.display='none';}}
+  else{var pp=$('photo-preview');if(pp)pp.style.display='none';if(pi)pi.style.display='';}
+  wrap.style.display='flex';
+}
+function hidePhotoModal(){var wrap=$('ovl-photo');if(wrap)wrap.style.display='none';}
+function triggerPhotoCapture(){var inp=$('photo-input');if(!inp)return;inp.setAttribute('capture','user');inp.click();}
+function triggerPhotoGallery(){var inp=$('photo-input');if(!inp)return;inp.removeAttribute('capture');inp.click();}
+
+function handlePhotoSelected(evt){
+  var file=evt.target.files&&evt.target.files[0];
+  if(!file||!cu)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var pp=$('photo-preview');if(pp){pp.src=e.target.result;pp.style.display='';}
+    var pi=$('photo-preview-initials');if(pi)pi.style.display='none';
+  };
+  reader.readAsDataURL(file);
+  uploadPhoto(file);
+}
+
+function uploadPhoto(file){
+  var pwrap=$('photo-progress-wrap'),bar=$('photo-progress-bar'),ptxt=$('photo-progress-txt');
+  if(pwrap)pwrap.style.display='block';
+  if(bar)bar.style.width='0%';
+  if(ptxt)ptxt.textContent='Processing...';
+  var imgEl=new Image();
+  var objUrl=URL.createObjectURL(file);
+  imgEl.onload=function(){
+    var canvas=document.createElement('canvas');
+    var maxSize=400;
+    var scale=Math.min(maxSize/imgEl.width,maxSize/imgEl.height,1);
+    canvas.width=Math.round(imgEl.width*scale);
+    canvas.height=Math.round(imgEl.height*scale);
+    canvas.getContext('2d').drawImage(imgEl,0,0,canvas.width,canvas.height);
+    URL.revokeObjectURL(objUrl);
+    canvas.toBlob(function(blob){
+      if(!blob){toast('Could not process image','err');if(pwrap)pwrap.style.display='none';return;}
+      if(ptxt)ptxt.textContent='Uploading...';
+      var storRef=storage.ref().child('photos/'+cu.uid+'/profile.jpg');
+      var task=storRef.put(blob,{contentType:'image/jpeg'});
+      task.on('state_changed',
+        function(snap){var pct=Math.round(snap.bytesTransferred/snap.totalBytes*100);if(bar)bar.style.width=pct+'%';if(ptxt)ptxt.textContent='Uploading... '+pct+'%';},
+        function(err){toast('Upload failed: '+err.code,'err');if(pwrap)pwrap.style.display='none';},
+        function(){
+          task.snapshot.ref.getDownloadURL().then(function(dlUrl){
+            return db.collection('users').doc(cu.uid).update({photoURL:dlUrl}).then(function(){
+              up.photoURL=dlUrl;
+              memberPhotos[cu.uid]=dlUrl;
+              updateAvatarUI();
+              buildPlayerPills();
+              toast('Photo saved! 📷');
+              if(pwrap)pwrap.style.display='none';
+              if(bar)bar.style.width='0%';
+              var inp=$('photo-input');if(inp)inp.value='';
+              hidePhotoModal();
+            });
+          }).catch(function(e){toast('Failed to save photo','err');console.error(e);if(pwrap)pwrap.style.display='none';});
+        }
+      );
+    },'image/jpeg',0.85);
+  };
+  imgEl.onerror=function(){toast('Could not load image','err');if(pwrap)pwrap.style.display='none';};
+  imgEl.src=objUrl;
+}
+
+function loadMemberPhotos(){
+  if(!cg)return;
+  memberPhotos[cu.uid]=up&&up.photoURL?up.photoURL:null;
+  (cg.members||[]).forEach(function(uid){
+    if(uid===cu.uid)return;
+    db.collection('users').doc(uid).get().then(function(snap){
+      if(snap.exists){var d=snap.data();memberPhotos[uid]=d.photoURL||null;}
+      else memberPhotos[uid]=null;
+    });
+  });
+}
+
+function updateAvatarUI(){
+  var ava=$('ava');
+  if(ava){
+    if(up&&up.photoURL){ava.innerHTML='<img src="'+up.photoURL+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';}
+    else{var nm=up?up.displayName:(cu?cu.email:'?');ava.textContent=nm.split(' ').map(function(n){return n[0]||'';}).join('').toUpperCase().slice(0,2)||'?';}
+  }
+  var lg=$('acc-photo'),init=$('acc-initials');
+  if(lg&&init){
+    if(up&&up.photoURL){lg.src=up.photoURL;lg.style.display='';init.style.display='none';}
+    else{lg.style.display='none';var nm2=up?up.displayName:'?';init.textContent=nm2.split(' ').map(function(n){return n[0]||'';}).join('').toUpperCase().slice(0,2)||'?';init.style.display='';}
+  }
+}
+
+function playerAvatar(uid,size){
+  size=size||24;
+  var photoURL=memberPhotos[uid];
+  var ms=getMembers();var m=ms.find(function(x){return x.uid===uid;});
+  var nm=m?m.name:'?';
+  var initials=nm.split(' ').map(function(n){return n[0]||'';}).join('').toUpperCase().slice(0,2)||'?';
+  var col=mColor(uid);
+  if(photoURL){return'<img src="'+photoURL+'" style="width:'+size+'px;height:'+size+'px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:4px">';}
+  return'<span style="width:'+size+'px;height:'+size+'px;min-width:'+size+'px;border-radius:50%;background:'+col+';color:#fff;font-size:'+(size<=24?9:12)+'px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;margin-right:4px;vertical-align:middle">'+initials+'</span>';
 }
 
 // ── Install banner ────────────────────────────────────────
