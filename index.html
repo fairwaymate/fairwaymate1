@@ -303,7 +303,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px">
           <div class="ctitle" style="margin-bottom:0">Step 2 — Which mates group?</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <button class="bsm" style="font-size:11px;padding:5px 10px" onclick="switchTab('account')">Switch</button>
+            <button class="bsm" style="font-size:11px;padding:5px 10px" onclick="switchToGroups()">Switch</button>
             <button class="bsm bsm-green" style="font-size:11px;padding:5px 10px" onclick="showCreateGrp()">+ New group</button>
             <button class="bsm" style="font-size:11px;padding:5px 10px" onclick="showCodeModal()">Join with code</button>
           </div>
@@ -366,6 +366,9 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
       <!-- STEP 4: Round details -->
       <div class="card">
         <div class="ctitle">Step 4 — Round details</div>
+        <div style="background:var(--gl);border-radius:var(--rs);padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--gt);line-height:1.6">
+          📱 <strong>Score hole by hole on the course</strong>, or enter from your paper scorecard in the clubhouse afterwards. One device scores for the whole group.
+        </div>
         <div class="field"><label>Date</label><input type="date" id="r-date"></div>
         <div style="font-size:12px;font-weight:600;color:var(--t2);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.05em">Players &amp; handicaps</div>
         <div id="hcap-fields"></div>
@@ -408,7 +411,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
         <button class="btn btnp" onclick="saveProfile()">Save profile</button>
       </div>
       <div id="acc-upgrade-wrap"></div>
-      <div class="asec">
+      <div class="asec" id="acc-groups-section">
         <div class="ctitle">My Mates Groups</div>
         <div id="acc-group-content"><p style="font-size:13px;color:var(--t2);margin-bottom:10px">No group yet.</p><button class="btn btns" onclick="showCreateGrp()">Create a mates group</button></div>
       </div>
@@ -774,6 +777,14 @@ function joinByCode(){
       window.history.replaceState({},'',window.location.pathname);
     });
   }).catch(function(e){toast('Failed to join group','err');console.error(e);}).finally(function(){setLoading('jc-btn',false,'Join group');});
+}
+
+function switchToGroups(){
+  switchTab('account');
+  setTimeout(function(){
+    var el=$('acc-groups-section');
+    if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+  },100);
 }
 
 function switchGroup(gid){
@@ -1514,6 +1525,7 @@ function renderUpgradeSection(){
     {label:'Score charts',     free:'Last 5 rounds',      premium:'Full charts',     freeOk:true,  premOk:true},
     {label:'Mates groups',     free:'1 group',            premium:'Unlimited',       freeOk:true,  premOk:true},
     {label:'Profile photo',    free:'✓',                  premium:'✓',               freeOk:true,  premOk:true},
+    {label:'Live scoring 🔜',  free:'Coming soon',        premium:'Coming soon',     freeOk:false, premOk:true},
   ];
 
   var tableRows = rows.map(function(r){
