@@ -1468,10 +1468,70 @@ function renderAccGroup(){
 function renderUpgradeSection(){
   var wrap=$('acc-upgrade-wrap');if(!wrap)return;
   var plan=getPlan(),days=trialDays();
-  if(plan==='premium'){wrap.style.display='none';return;}
-  wrap.style.display='';
-  if(plan==='trial'){wrap.innerHTML='<div class="asec" style="border-color:var(--g)"><div class="ctitle" style="color:var(--gt)">⭐ Upgrade to Premium</div><p style="font-size:13px;color:var(--t2);margin-bottom:12px">Your free trial ends in <strong>'+days+' days</strong>. Upgrade to keep full access.</p><div style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.8">✓ Unlimited solo rounds<br>✓ Unlimited mates rounds<br>✓ Unlimited course searches<br>✓ Full round history &amp; score charts<br>✓ Multiple mates groups</div><button class="btn btnp" onclick="showUpgrade(\'groupRounds\')">Upgrade — £2.99/month</button><p style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px">or £19.99/year — save 44%</p></div>';}
-  else{wrap.innerHTML='<div class="asec" style="border-color:#E6A817"><div class="ctitle" style="color:#7A5200">⭐ You\'re on the Free plan</div><div style="font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.8">✓ Unlimited solo rounds<br>✓ 20 mates rounds &middot; '+groupRoundCount()+' used<br>✓ 5 course searches/month &middot; '+searchCount()+' used<br>✓ Last 10 rounds of history<br>✓ Last 5 score charts<br>✓ 1 mates group</div><button class="btn btnp" onclick="showUpgrade(\'groupRounds\')">Upgrade to Premium — £2.99/month</button><p style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px">or £19.99/year — save 44%</p></div>';}
+  var usedRounds=groupRoundCount(),usedSearches=searchCount();
+
+  if(plan==='premium'){
+    wrap.innerHTML='<div class="asec" style="border-color:#c9a84c">'+
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'+
+        '<div style="width:40px;height:40px;border-radius:50%;background:#c9a84c22;display:flex;align-items:center;justify-content:center;font-size:20px">⭐</div>'+
+        '<div><div style="font-size:15px;font-weight:700;color:#7A5200">You\'re on Premium</div><div style="font-size:12px;color:var(--t2)">Full access to all features</div></div>'+
+      '</div>'+
+    '</div>';
+    return;
+  }
+
+  // Trial or free — show full comparison
+  var trialBanner = plan==='trial'
+    ? '<div style="background:var(--g);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;text-align:center">'+
+        '<div style="font-size:13px;font-weight:700;color:white">⏱ '+days+' days left on your free trial</div>'+
+        '<div style="font-size:12px;color:rgba(255,255,255,.8);margin-top:3px">You currently have <strong>Premium access</strong> — enjoy it while it lasts!</div>'+
+      '</div>'
+    : '<div style="background:#FFF8E7;border:.5px solid #E6A817;border-radius:var(--rs);padding:10px 14px;margin-bottom:14px;text-align:center">'+
+        '<div style="font-size:13px;font-weight:700;color:#7A5200">You\'re on the Free plan</div>'+
+        '<div style="font-size:12px;color:#92670a;margin-top:3px">Upgrade to keep full access to all features</div>'+
+      '</div>';
+
+  var rows = [
+    {label:'Solo rounds',      free:'Unlimited',          premium:'Unlimited',       freeOk:true,  premOk:true},
+    {label:'Mates rounds',     free:'20 total ('+usedRounds+' used)', premium:'Unlimited', freeOk:usedRounds<20, premOk:true},
+    {label:'Course searches',  free:'5/month ('+usedSearches+' used)', premium:'Unlimited', freeOk:usedSearches<5, premOk:true},
+    {label:'Round history',    free:'Last 10 rounds',     premium:'Full history',    freeOk:true,  premOk:true},
+    {label:'Score charts',     free:'Last 5 rounds',      premium:'Full charts',     freeOk:true,  premOk:true},
+    {label:'Mates groups',     free:'1 group',            premium:'Unlimited',       freeOk:true,  premOk:true},
+    {label:'Profile photo',    free:'✓',                  premium:'✓',               freeOk:true,  premOk:true},
+  ];
+
+  var tableRows = rows.map(function(r){
+    var freeColor = r.freeOk ? 'var(--t2)' : '#D85A30';
+    var freeIcon = r.freeOk ? '✓' : '⚠';
+    return '<tr>'+
+      '<td style="padding:9px 8px;font-size:13px;font-weight:500;color:var(--t);border-bottom:.5px solid var(--bdr)">'+r.label+'</td>'+
+      '<td style="padding:9px 8px;font-size:12px;color:'+freeColor+';text-align:center;border-bottom:.5px solid var(--bdr)">'+freeIcon+' '+r.free+'</td>'+
+      '<td style="padding:9px 8px;font-size:12px;color:var(--g);font-weight:600;text-align:center;border-bottom:.5px solid var(--bdr);background:var(--gl)">✓ '+r.premium+'</td>'+
+    '</tr>';
+  }).join('');
+
+  wrap.innerHTML='<div class="asec" style="border-color:var(--g);padding:16px">'+
+    '<div class="ctitle" style="color:var(--gt);margin-bottom:12px">Your plan</div>'+
+    trialBanner+
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:14px">'+
+      '<thead>'+
+        '<tr>'+
+          '<th style="padding:8px;font-size:11px;font-weight:700;color:var(--t2);text-align:left;border-bottom:.5px solid var(--bdr)">Feature</th>'+
+          '<th style="padding:8px;font-size:11px;font-weight:700;color:var(--t2);text-align:center;border-bottom:.5px solid var(--bdr)">Free plan</th>'+
+          '<th style="padding:8px;font-size:11px;font-weight:700;color:var(--gt);text-align:center;border-bottom:.5px solid var(--bdr);background:var(--gl);border-radius:var(--rs) var(--rs) 0 0">Premium ⭐</th>'+
+        '</tr>'+
+      '</thead>'+
+      '<tbody>'+tableRows+'</tbody>'+
+    '</table>'+
+    '<div style="background:var(--g);border-radius:var(--rs);padding:14px;text-align:center;margin-bottom:8px">'+
+      '<div style="font-size:16px;font-weight:700;color:white;margin-bottom:4px">Upgrade to Premium</div>'+
+      '<div style="font-size:13px;color:rgba(255,255,255,.8);margin-bottom:12px">Keep everything unlimited — forever</div>'+
+      '<button class="btn" style="background:white;color:var(--gt);font-weight:700;margin:0 0 8px" onclick="showUpgrade(\'groupRounds\')">£2.99/month — Upgrade now</button>'+
+      '<div style="font-size:12px;color:rgba(255,255,255,.7)">or £19.99/year — save 44% · Cancel any time</div>'+
+    '</div>'+
+    '<p style="font-size:11px;color:var(--t3);text-align:center">✓ No commitment · ✓ Cancel any time · ✓ Instant access</p>'+
+  '</div>';
 }
 
 function saveProfile(){
