@@ -258,6 +258,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
         Sign up with Google
       </button>
       <div class="auth-lnk">Already have an account? <a onclick="showSection('login')">Sign in</a></div>
+      <div style="font-size:11px;color:var(--t3);text-align:center;margin-top:12px;line-height:1.6">🔒 Your data is stored securely on Google Firebase servers in London. We never sell your data. <a href="privacy.html" target="_blank" style="color:var(--t3)">Privacy Policy</a></div>
     </div>
     <div id="a-forgot" class="auth-card" style="display:none">
       <div class="auth-title">Reset password</div>
@@ -418,7 +419,11 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
       <div class="asec">
         <div class="ctitle">Account</div>
         <p style="font-size:13px;color:var(--t2);margin-bottom:12px" id="acc-email"></p>
+        <div style="background:var(--gl);border-radius:var(--rs);padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--gt);line-height:1.6">
+          🔒 Your data is stored securely on Google Firebase servers in London. We never sell your data or show you ads. <a href="privacy.html" target="_blank" style="color:var(--gt);font-weight:600">Privacy Policy</a>
+        </div>
         <button class="btn btns" onclick="doLogout()">Sign out</button>
+        <button class="btn" style="background:none;color:#ef4444;border:.5px solid #fca5a5;margin-top:4px" onclick="deleteAccount()">Delete my account</button>
       </div>
     </div>
   </div>
@@ -1691,7 +1696,56 @@ function playerAvatar(uid,size){
   return'<span style="width:'+size+'px;height:'+size+'px;min-width:'+size+'px;border-radius:50%;background:'+col+';color:#fff;font-size:'+(size<=24?9:12)+'px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;margin-right:4px;vertical-align:middle">'+initials+'</span>';
 }
 
-// ── Install banner ────────────────────────────────────────
+function deleteAccount(){
+  if(!confirm('Delete your FairwayMate account?\n\nThis will permanently delete:\n• Your profile and photo\n• Your membership of all mates groups\n• All rounds you created\n\nThis cannot be undone.'))return;
+  if(!confirm('Are you absolutely sure? All your data will be permanently deleted.'))return;
+  toast('Deleting account...','info');
+  var uid=cu.uid;
+  var tasks=[];
+  // Remove from all groups
+  allGroups.forEach(function(g){
+    var idx=(g.members||[]).indexOf(uid);
+    if(idx<0)return;
+    if(g.createdBy===uid){
+      // Creator — delete entire group and its rounds
+      tasks.push(
+        db.collection('groups').doc(g.id).collection('rounds').get().then(function(snap){
+          var batch=db.batch();
+          snap.docs.forEach(function(d){batch.delete(d.ref);});
+          return batch.commit();
+        }).then(function(){
+          return db.collection('groups').doc(g.id).delete();
+        })
+      );
+    } else {
+      // Member — just remove self from group
+      var newM=g.members.filter(function(x){return x!==uid;});
+      var newN=(g.memberNames||[]).filter(function(_,i){return (g.members||[])[i]!==uid;});
+      var newE=(g.memberEmails||[]).filter(function(_,i){return (g.members||[])[i]!==uid;});
+      tasks.push(db.collection('groups').doc(g.id).update({members:newM,memberNames:newN,memberEmails:newE}));
+    }
+  });
+  // Delete user Firestore document
+  tasks.push(db.collection('users').doc(uid).delete());
+  // Delete profile photo from Storage
+  tasks.push(
+    storage.ref().child('photos/'+uid+'/profile.jpg').delete().catch(function(){})
+  );
+  Promise.all(tasks).then(function(){
+    // Delete Firebase Auth account last
+    return cu.delete();
+  }).then(function(){
+    toast('Account deleted. Goodbye! 👋');
+  }).catch(function(e){
+    // If auth deletion fails due to needing re-auth
+    if(e.code==='auth/requires-recent-login'){
+      toast('Please sign out and sign back in, then try again','err');
+    } else {
+      toast('Failed to delete account — please contact hello@fairway-mate.com','err');
+      console.error(e);
+    }
+  });
+}
 function showInstall(){
   var b=$('ibanner');if(!b||window.matchMedia('(display-mode:standalone)').matches||window.navigator.standalone)return;
   if(/iphone|ipad|ipod/i.test(navigator.userAgent)){b.innerHTML='<b>Add to Home Screen:</b> Tap Share (□↑) then <b>"Add to Home Screen"</b>.';b.style.display='block';}
