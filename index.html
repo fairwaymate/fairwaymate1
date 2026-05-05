@@ -1150,11 +1150,11 @@ function doSearch(){
   if(!isPremium()&&searchCount()>=getLimit('searches')){showUpgrade('searches');return;}
   var r=$('srch-res');r.innerHTML='<div class="srst">Searching…</div>';
   var globalSearch=fetch('https://api.golfcourseapi.com/v1/search?search_query='+encodeURIComponent(q),{headers:{'Authorization':'Key '+GK}}).then(function(res){return res.json();}).catch(function(){return{courses:[]};});
-  var ukSearch=UK_GK?fetch('https://uk-golf-course-data-api.p.rapidapi.com/clubs?search='+encodeURIComponent(q)+'&limit=10',{headers:{'X-RapidAPI-Key':UK_GK,'X-RapidAPI-Host':'uk-golf-course-data-api.p.rapidapi.com'}}).then(function(res){return res.json();}).catch(function(){return{clubs:[]};})
+  var ukSearch=UK_GK?fetch('https://uk-golf-course-data-api.p.rapidapi.com/clubs?name='+encodeURIComponent(q)+'&per_page=10',{headers:{'X-RapidAPI-Key':UK_GK,'X-RapidAPI-Host':'uk-golf-course-data-api.p.rapidapi.com'}}).then(function(res){return res.json();}).catch(function(){return{clubs:[]};})
   :Promise.resolve({clubs:[]});
   Promise.all([globalSearch,ukSearch]).then(function(results){
     var globalCourses=(results[0].courses||[]);
-    var ukCourses=(results[1].clubs||[]).map(function(c){return{club_name:c.name,_source:'uk',_id:c.id,location:{city:c.county||c.region||'',country:'United Kingdom'},tees:{male:[{number_of_holes:c.holes||18,holes:[]}]}};});
+    var ukRaw=results[1];var ukList=ukRaw.clubs||ukRaw.data||ukRaw.results||[];var ukCourses=ukList.map(function(c){return{club_name:c.name||c.club_name||c.title,_source:'uk',_id:c.id,location:{city:c.county||c.city||c.region||'',country:'United Kingdom'},tees:{male:[{number_of_holes:c.holes||c.number_of_holes||18,holes:[]}]}};});
     var globalNames=globalCourses.map(function(c){return(c.club_name||'').toLowerCase().trim();});
     var uniqueUK=ukCourses.filter(function(c){return globalNames.indexOf((c.club_name||'').toLowerCase().trim())<0;});
     var cs=globalCourses.concat(uniqueUK).slice(0,15);
