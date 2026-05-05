@@ -87,9 +87,9 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .panel{display:none;padding:16px;padding-bottom:max(24px,env(safe-area-inset-bottom))}
 .panel.active{display:block}
-.card{background:var(--card);border-radius:var(--r);border:.5px solid var(--bdr);padding:14px;margin-bottom:12px}
-.ctitle{font-size:12px;font-weight:600;color:var(--t2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em}
-.grp-box{background:var(--gl);border:.5px solid var(--g);border-radius:var(--r);padding:14px;margin-bottom:8px}
+.card{background:var(--card);border-radius:var(--r);border:.5px solid var(--bdr);border-left:3px solid var(--g);padding:14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.ctitle{font-size:13px;font-weight:700;color:var(--gt);margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em}
+.grp-box{background:var(--card);border:.5px solid var(--bdr);border-left:3px solid var(--gold);border-radius:var(--r);padding:14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 .grp-top{display:flex;justify-content:space-between;align-items:flex-start}
 .grp-name{font-size:15px;font-weight:700;color:var(--gt)}
 .grp-mem{font-size:12px;color:var(--gt);margin-top:3px;line-height:1.5}
@@ -102,11 +102,11 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .prow{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
 .player-pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .ppill{padding:8px 12px;border-radius:20px;border:.5px solid var(--bdm);background:var(--bg);color:var(--t2);font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif}
-.ppill.sel{border-color:var(--g);background:var(--gl);color:var(--gt)}
-.ppill.sel-solo{border-color:var(--b);background:var(--bl);color:var(--bt)}
+.ppill.sel{border-color:var(--g);background:var(--g);color:#fff;font-weight:600}
+.ppill.sel-solo{border-color:var(--b);background:var(--b);color:#fff;font-weight:600}
 .ppill.me{font-weight:600}
 .mpill,.cpill{flex:1;padding:9px 8px;border-radius:var(--rs);border:.5px solid var(--bdm);background:var(--bg);color:var(--t2);font-size:13px;font-weight:500;cursor:pointer;text-align:center;line-height:1.4;font-family:'DM Sans',sans-serif}
-.mpill.active,.cpill.active{background:var(--gl);border-color:var(--g);color:var(--gt)}
+.mpill.active,.cpill.active{background:var(--g);border-color:var(--g);color:#fff;font-weight:600}
 .cbdg{display:block;font-size:10px;margin-top:2px;opacity:.7}
 .slbl{font-size:12px;color:var(--t2);font-weight:500}
 .sc-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -14px;padding:0 14px}
@@ -321,7 +321,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
 
       <!-- STEP 1: Solo or with mates -->
       <div class="card">
-        <div class="ctitle">Step 1 — Solo or with your mates?</div>
+        <div class="ctitle"><span style="color:var(--gold)">Step 1</span> — Solo or with your mates?</div>
         <div class="prow">
           <button class="mpill active" id="mp-mates" onclick="setMode('mates')">👥 With your mates</button>
           <button class="mpill" id="mp-solo" onclick="setMode('solo')">🏌️ Solo round</button>
@@ -332,7 +332,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
       <div id="grp-section" class="card" style="display:none">
         <!-- Header row with inline action buttons -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px">
-          <div class="ctitle" style="margin-bottom:0">Step 2 — Which mates group?</div>
+          <div class="ctitle" style="margin-bottom:0"><span style="color:var(--gold)">Step 2</span> — Which mates group?</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button class="bsm" style="font-size:11px;padding:5px 10px" onclick="switchToGroups()">Switch</button>
             <button class="bsm bsm-green" style="font-size:11px;padding:5px 10px" onclick="showCreateGrp()">+ New group</button>
@@ -372,7 +372,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
 
       <!-- STEP 2B: Solo player (solo mode only) -->
       <div id="solo-section" class="card" style="display:none">
-        <div class="ctitle">Step 2 — Playing solo</div>
+        <div class="ctitle"><span style="color:var(--gold)">Step 2</span> — Playing solo</div>
         <div id="solo-player-display" style="display:flex;align-items:center;gap:10px;padding:8px 0">
           <!-- Populated by JS -->
         </div>
@@ -380,7 +380,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
 
       <!-- STEP 3: Course -->
       <div class="card">
-        <div class="ctitle">Step 3 — Which course?</div>
+        <div class="ctitle"><span style="color:var(--gold)">Step 3</span> — Which course?</div>
         <div id="recent-courses-label" style="font-size:11px;color:var(--t2);margin-bottom:6px;display:none">⏱ Recent courses</div>
         <div id="recent-courses" style="margin-bottom:8px"></div>
         <button class="cpill" id="pill-search" onclick="toggleSearch()" style="width:100%;margin-top:2px">🔍 Search any course<span class="cbdg">30,000+ worldwide</span></button>
@@ -396,7 +396,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
 
       <!-- STEP 4: Round details -->
       <div class="card">
-        <div class="ctitle">Step 4 — Round details</div>
+        <div class="ctitle"><span style="color:var(--gold)">Step 4</span> — Round details</div>
         <div style="background:var(--gl);border-radius:var(--rs);padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--gt);line-height:1.6">
           📱 <strong>Score hole by hole on the course</strong>, or enter from your paper scorecard in the clubhouse afterwards. One device scores for the whole group.
         </div>
