@@ -1224,7 +1224,7 @@ function saveCustomCourse(){
     var sw=$('srchwrap');if(sw)sw.classList.remove('open');
     $('pill-search').classList.remove('active');
   }).catch(function(e){
-    toast('Failed to save course','err');console.error(e);
+    toast('Failed to save: '+e.code,'err');console.error('Custom course save error:',e);
   });
 }
 
