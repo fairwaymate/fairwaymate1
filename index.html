@@ -1153,6 +1153,7 @@ function doSearch(){
   var ukSearch=UK_GK?fetch('https://uk-golf-course-data-api.p.rapidapi.com/clubs?name='+encodeURIComponent(q)+'&per_page=10',{headers:{'X-RapidAPI-Key':UK_GK,'X-RapidAPI-Host':'uk-golf-course-data-api.p.rapidapi.com'}}).then(function(res){return res.json();}).catch(function(){return{clubs:[]};})
   :Promise.resolve({clubs:[]});
   Promise.all([globalSearch,ukSearch]).then(function(results){
+    console.log('UK API response:',JSON.stringify(results[1]));
     var globalCourses=(results[0].courses||[]);
     var ukRaw=results[1];var ukList=ukRaw.clubs||ukRaw.data||ukRaw.results||[];var ukCourses=ukList.map(function(c){return{club_name:c.name||c.club_name||c.title,_source:'uk',_id:c.id,location:{city:c.county||c.city||c.region||'',country:'United Kingdom'},tees:{male:[{number_of_holes:c.holes||c.number_of_holes||18,holes:[]}]}};});
     var globalNames=globalCourses.map(function(c){return(c.club_name||'').toLowerCase().trim();});
