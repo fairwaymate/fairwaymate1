@@ -187,6 +187,16 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
 .empty{text-align:center;padding:40px 20px;color:var(--t2);font-size:14px;line-height:1.6}
 .eico{font-size:40px;margin-bottom:12px}
 .ibanner{background:var(--gl);border:.5px solid var(--g);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--gt);display:none;line-height:1.5}
+.custom-badge{font-size:10px;background:var(--gold-l);color:var(--gold-t);border:.5px solid var(--gold);padding:1px 5px;border-radius:4px;margin-left:4px;font-weight:600}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-box{background:var(--card);border-radius:var(--r);padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--gt);margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--t2);margin-bottom:20px}
+.hole-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:16px}
+.hole-cell{background:var(--bg);border-radius:var(--rs);padding:8px;text-align:center}
+.hole-cell-label{font-size:10px;color:var(--t3);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.hole-cell input{width:100%;text-align:center;border:.5px solid var(--bdm);border-radius:4px;padding:4px;font-size:14px;font-weight:700;background:var(--card);color:var(--t);font-family:'DM Sans',sans-serif}
+.hole-header{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;margin-top:16px}
 </style>
 </head>
 <body>
@@ -390,6 +400,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
             <button class="srchbtn" onclick="doSearch()">Search</button>
           </div>
           <div id="srch-res"></div>
+          <div style="text-align:center;padding:8px 0 2px"><button onclick="openAddCourse()" style="background:none;border:none;color:var(--gt);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline">+ Add course manually</button></div>
           <div id="srch-lbl" class="lbanner"></div>
         </div>
       </div>
@@ -607,7 +618,7 @@ function showUpgrade(reason){
 
 // ── Auth ──────────────────────────────────────────────────
 auth.onAuthStateChanged(function(user){
-  if(user){cu=user;loadProfile(user);}
+  if(user){cu=user;loadProfile(user);loadCustomCourses();}
   else{cu=null;up=null;cg=null;allGroups=[];showPage('pg-auth');showSection('login');}
 });
 
@@ -1139,6 +1150,116 @@ function selCourse(key,rebuild){
   if(rebuild!==false)buildSC();
 }
 
+
+// ── CUSTOM COURSES ──────────────────────────────────────────────
+
+var acHoles=9;
+
+function openAddCourse(){
+  acHoles=9;
+  var m=$('add-course-modal');m.style.display='flex';
+  $('ac-name').value='';
+  buildACHoleGrid();
+  setTimeout(function(){$('ac-name').focus();},100);
+}
+
+function closeAddCourse(){
+  $('add-course-modal').style.display='none';
+}
+
+function setACHoles(n){
+  acHoles=n;
+  $('ac-9').classList.toggle('active',n===9);
+  $('ac-18').classList.toggle('active',n===18);
+  buildACHoleGrid();
+}
+
+function buildACHoleGrid(){
+  var w=$('ac-holes-wrap');
+  var html='<div class="hole-header">Hole details (Par &amp; Stroke Index)</div><div class="hole-grid">';
+  for(var i=1;i<=acHoles;i++){
+    html+='<div class="hole-cell"><div class="hole-cell-label">Hole '+i+'</div>'
+      +'<div style="display:flex;gap:4px">'
+      +'<input type="number" id="ac-par-'+i+'" min="3" max="5" value="4" title="Par">'
+      +'<input type="number" id="ac-si-'+i+'" min="1" max="'+acHoles+'" value="'+i+'" title="SI">'
+      +'</div>'
+      +'<div style="display:flex;gap:4px;margin-top:2px"><span style="flex:1;font-size:9px;color:var(--t3);text-align:center">Par</span><span style="flex:1;font-size:9px;color:var(--t3);text-align:center">SI</span></div>'
+      +'</div>';
+  }
+  html+='</div>';
+  w.innerHTML=html;
+}
+
+function saveCustomCourse(){
+  var nm=($('ac-name').value||'').trim();
+  if(!nm){toast('Please enter a course name','err');return;}
+  var u=auth.currentUser;if(!u){toast('Please sign in first','err');return;}
+
+  var holes=[];
+  for(var i=1;i<=acHoles;i++){
+    var par=parseInt(($('ac-par-'+i).value)||4);
+    var si=parseInt(($('ac-si-'+i).value)||i);
+    holes.push({n:i,par:par,si:si});
+  }
+
+  var ckey='custom_'+nm.replace(/[^a-zA-Z0-9]/g,'').toLowerCase().slice(0,20)+'_'+acHoles;
+  var courseData={
+    name:nm,
+    holes:holes,
+    holeCount:acHoles,
+    halves:acHoles<=9?[{l:'All '+acHoles+' Holes',t:'Total',s:0,e:acHoles}]:[{l:'Front 9',t:'Out',s:0,e:9},{l:'Back 9',t:'In',s:9,e:acHoles}],
+    createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+    uid:u.uid
+  };
+
+  db.collection('custom_courses').doc(u.uid+'_'+ckey).set(courseData).then(function(){
+    COURSES[ckey]=courseData;
+    ac=ckey;
+    var lb=$('srch-lbl');
+    if(lb){lb.textContent='✓ '+nm+' · '+acHoles+' holes · Par '+holes.reduce(function(a,h){return a+h.par;},0);lb.style.display='block';}
+    closeAddCourse();
+    toast('Course saved! ⛳','ok');
+    buildSC();
+    // close search panel
+    var sw=$('srchwrap');if(sw)sw.classList.remove('open');
+    $('pill-search').classList.remove('active');
+  }).catch(function(e){
+    toast('Failed to save course','err');console.error(e);
+  });
+}
+
+function loadCustomCourses(){
+  var u=auth.currentUser;if(!u)return;
+  db.collection('custom_courses').where('uid','==',u.uid).get().then(function(snap){
+    snap.forEach(function(doc){
+      var d=doc.data();
+      var ckey='custom_'+d.name.replace(/[^a-zA-Z0-9]/g,'').toLowerCase().slice(0,20)+'_'+d.holeCount;
+      COURSES[ckey]=d;
+    });
+  }).catch(function(e){console.error('Error loading custom courses:',e);});
+}
+
+function searchCustomCourses(q){
+  var u=auth.currentUser;if(!u)return[];
+  var results=[];
+  var ql=q.toLowerCase();
+  Object.keys(COURSES).forEach(function(k){
+    if(k.startsWith('custom_')){
+      var c=COURSES[k];
+      if(c.name&&c.name.toLowerCase().indexOf(ql)>=0){
+        results.push({
+          club_name:c.name,
+          _source:'custom',
+          _key:k,
+          location:{city:'',country:'Custom course'},
+          tees:{male:[{number_of_holes:c.holeCount||c.holes.length,holes:c.holes}]}
+        });
+      }
+    }
+  });
+  return results;
+}
+
 function toggleSearch(){
   var w=$('srchwrap');w.classList.toggle('open');
   $('pill-search').classList.toggle('active',w.classList.contains('open'));
@@ -1152,24 +1273,36 @@ function doSearch(){
   var globalSearch=fetch('https://api.golfcourseapi.com/v1/search?search_query='+encodeURIComponent(q),{headers:{'Authorization':'Key '+GK}}).then(function(res){return res.json();}).catch(function(){return{courses:[]};});
   var ukSearch=UK_GK?fetch('https://uk-golf-course-data-api.p.rapidapi.com/clubs?name='+encodeURIComponent(q)+'&per_page=10',{headers:{'X-RapidAPI-Key':UK_GK,'X-RapidAPI-Host':'uk-golf-course-data-api.p.rapidapi.com'}}).then(function(res){return res.json();}).catch(function(){return{clubs:[]};})
   :Promise.resolve({clubs:[]});
+  var customResults=searchCustomCourses(q);
   Promise.all([globalSearch,ukSearch]).then(function(results){
-    console.log('UK API response:',JSON.stringify(results[1]));
     var globalCourses=(results[0].courses||[]);
     var ukRaw=results[1];var ukList=ukRaw.clubs||ukRaw.data||ukRaw.results||[];var ukCourses=ukList.map(function(c){return{club_name:c.name||c.club_name||c.title,_source:'uk',_id:c.id,location:{city:c.county||c.city||c.region||'',country:'United Kingdom'},tees:{male:[{number_of_holes:c.holes||c.number_of_holes||18,holes:[]}]}};});
     var globalNames=globalCourses.map(function(c){return(c.club_name||'').toLowerCase().trim();});
     var uniqueUK=ukCourses.filter(function(c){return globalNames.indexOf((c.club_name||'').toLowerCase().trim())<0;});
-    var cs=globalCourses.concat(uniqueUK).slice(0,15);
+    var cs=customResults.concat(globalCourses).concat(uniqueUK).slice(0,15);
     if(!cs.length){r.innerHTML='<div class="srst">No courses found. Try a different spelling or postcode.</div>';return;}
     incSearch();
     window._sr=cs;
     if(!isPremium()){var rem=getLimit('searches')-searchCount();if(rem<=1)r.innerHTML='<div style="background:var(--gl);border-radius:var(--rs);padding:8px 12px;font-size:12px;color:var(--gt);margin-bottom:6px">⚠️ '+rem+' free course search'+(rem!==1?'es':'')+' remaining this month</div>';}
     else r.innerHTML='';
-    r.innerHTML+=cs.slice(0,15).map(function(c,i){var loc=[c.location&&c.location.city,c.location&&c.location.country].filter(function(v){return v&&v!=='Unknown';}).join(', ');var n=(c.tees&&(c.tees.male||c.tees.female||[])[0]&&(c.tees.male||c.tees.female||[])[0].number_of_holes)||'';var ukBadge=c._source==='uk'?'<span style="font-size:10px;background:var(--gl);color:var(--gt);padding:1px 5px;border-radius:4px;margin-left:4px">UK</span>':'';return'<div class="sri" onclick="loadCourse('+i+')" data-source="'+(c._source||'global')+'"><div class="srn">'+(c.club_name||'Unknown')+ukBadge+'</div><div class="srs">'+loc+(n?' · '+n+' holes':'')+'</div></div>';}).join('');
+    r.innerHTML+=cs.slice(0,15).map(function(c,i){var loc=[c.location&&c.location.city,c.location&&c.location.country].filter(function(v){return v&&v!=='Unknown';}).join(', ');var n=(c.tees&&(c.tees.male||c.tees.female||[])[0]&&(c.tees.male||c.tees.female||[])[0].number_of_holes)||'';var ukBadge=c._source==='uk'?'<span style="font-size:10px;background:var(--gl);color:var(--gt);padding:1px 5px;border-radius:4px;margin-left:4px">UK</span>':'';var customBadge=c._source==='custom'?'<span class="custom-badge">My course</span>':'';return'<div class="sri" onclick="loadCourse('+i+')" data-source="'+(c._source||'global')+'"><div class="srn">'+(c.club_name||'Unknown')+ukBadge+customBadge+'</div><div class="srs">'+loc+(n?' · '+n+' holes':'')+'</div></div>';}).join('');
   }).catch(function(){r.innerHTML='<div class="srst">Search failed — check your connection.</div>';});
 }
 function loadCourse(idx){
   var c=window._sr&&window._sr[idx];if(!c)return;
   var r=$('srch-res');
+  // Handle custom courses — already have full data in COURSES
+  if(c._source==='custom'&&c._key&&COURSES[c._key]){
+    var cd=COURSES[c._key];
+    ac=c._key;
+    document.querySelectorAll('.cpill').forEach(function(p){p.classList.remove('active');});
+    $('pill-search').classList.add('active');
+    var lb=$('srch-lbl');
+    if(lb){lb.textContent='✓ '+cd.name+' · '+cd.holes.length+' holes · Par '+cd.holes.reduce(function(a,h){return a+h.par;},0);lb.style.display='block';}
+    r.innerHTML='';$('srchi').value='';
+    buildSC();
+    return;
+  }
   try{
     var tees=c.tees&&(c.tees.male&&c.tees.male.length?c.tees.male:c.tees.female||[]);
     var tee=tees[0];
@@ -1819,6 +1952,27 @@ document.addEventListener('keydown',function(e){
       <p id="photo-progress-txt" style="font-size:12px;color:var(--t2);margin-top:6px;text-align:center">Uploading...</p>
     </div>
     <button class="abtn abtn-w" onclick="hidePhotoModal()" style="margin-top:4px">Cancel</button>
+  </div>
+</div>
+
+<!-- Manual course entry modal -->
+<div id="add-course-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeAddCourse()">
+  <div class="modal-box">
+    <div class="modal-title">Add a course manually</div>
+    <div class="modal-sub">Can't find your course? Add it here and it'll be saved to your account for future rounds.</div>
+    <div class="field"><label class="field label">Course name</label><input type="text" id="ac-name" class="field input" placeholder="e.g. Owston Park Golf Course" style="width:100%"></div>
+    <div style="margin-top:12px">
+      <label class="field label">Number of holes</label>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <button id="ac-9" class="mpill active" onclick="setACHoles(9)" style="flex:1">9 holes</button>
+        <button id="ac-18" class="mpill" onclick="setACHoles(18)" style="flex:1">18 holes</button>
+      </div>
+    </div>
+    <div id="ac-holes-wrap" style="margin-top:16px"></div>
+    <div style="display:flex;gap:8px;margin-top:20px">
+      <button class="abtn abtn-w" onclick="closeAddCourse()" style="flex:1">Cancel</button>
+      <button class="abtn abtn-g" onclick="saveCustomCourse()" style="flex:1">Save course</button>
+    </div>
   </div>
 </div>
 </body>
