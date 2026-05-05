@@ -563,6 +563,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
 // ── Constants ─────────────────────────────────────────────
 const COLORS=['#2a5a2a','#378ADD','#E8820C','#8B5CF6','#EC4899'];
 const GK='XAXIAQF5MRIUAI52A3RT45VU3A';
+const UK_GK='f33581e35emsh38f39a1e18ee936p1a9e8fjsn2cd53e661da9'; // UK Golf API (golfapi.uk)
 const COURSES={};
 const LIMITS={free:{groupRounds:20,searches:5,history:10,charts:5,groups:1},trial:{groupRounds:999,searches:999,history:999,charts:999,groups:999},premium:{groupRounds:999,searches:999,history:999,charts:999,groups:999}};
 
@@ -1148,17 +1149,23 @@ function doSearch(){
   var q=$('srchi').value.trim();if(!q)return;
   if(!isPremium()&&searchCount()>=getLimit('searches')){showUpgrade('searches');return;}
   var r=$('srch-res');r.innerHTML='<div class="srst">Searching…</div>';
-  fetch('https://api.golfcourseapi.com/v1/search?search_query='+encodeURIComponent(q),{headers:{'Authorization':'Key '+GK}}).then(function(res){return res.json();}).then(function(data){
-    var cs=data.courses||[];
-    if(!cs.length){r.innerHTML='<div class="srst">No courses found. Try adding the country.</div>';return;}
+  var globalSearch=fetch('https://api.golfcourseapi.com/v1/search?search_query='+encodeURIComponent(q),{headers:{'Authorization':'Key '+GK}}).then(function(res){return res.json();}).catch(function(){return{courses:[]};});
+  var ukSearch=UK_GK?fetch('https://uk-golf-course-data-api.p.rapidapi.com/clubs?search='+encodeURIComponent(q)+'&limit=10',{headers:{'X-RapidAPI-Key':UK_GK,'X-RapidAPI-Host':'uk-golf-course-data-api.p.rapidapi.com'}}).then(function(res){return res.json();}).catch(function(){return{clubs:[]};})
+  :Promise.resolve({clubs:[]});
+  Promise.all([globalSearch,ukSearch]).then(function(results){
+    var globalCourses=(results[0].courses||[]);
+    var ukCourses=(results[1].clubs||[]).map(function(c){return{club_name:c.name,_source:'uk',_id:c.id,location:{city:c.county||c.region||'',country:'United Kingdom'},tees:{male:[{number_of_holes:c.holes||18,holes:[]}]}};});
+    var globalNames=globalCourses.map(function(c){return(c.club_name||'').toLowerCase().trim();});
+    var uniqueUK=ukCourses.filter(function(c){return globalNames.indexOf((c.club_name||'').toLowerCase().trim())<0;});
+    var cs=globalCourses.concat(uniqueUK).slice(0,15);
+    if(!cs.length){r.innerHTML='<div class="srst">No courses found. Try a different spelling or postcode.</div>';return;}
     incSearch();
-    window._sr=cs.slice(0,15);
+    window._sr=cs;
     if(!isPremium()){var rem=getLimit('searches')-searchCount();if(rem<=1)r.innerHTML='<div style="background:var(--gl);border-radius:var(--rs);padding:8px 12px;font-size:12px;color:var(--gt);margin-bottom:6px">⚠️ '+rem+' free course search'+(rem!==1?'es':'')+' remaining this month</div>';}
     else r.innerHTML='';
-    r.innerHTML+=cs.slice(0,15).map(function(c,i){var loc=[c.location&&c.location.city,c.location&&c.location.country].filter(function(v){return v&&v!=='Unknown';}).join(', ');var n=(c.tees&&(c.tees.male||c.tees.female||[])[0]&&(c.tees.male||c.tees.female||[])[0].number_of_holes)||'';return'<div class="sri" onclick="loadCourse('+i+')"><div class="srn">'+(c.club_name||'Unknown')+'</div><div class="srs">'+loc+(n?' · '+n+' holes':'')+'</div></div>';}).join('');
+    r.innerHTML+=cs.slice(0,15).map(function(c,i){var loc=[c.location&&c.location.city,c.location&&c.location.country].filter(function(v){return v&&v!=='Unknown';}).join(', ');var n=(c.tees&&(c.tees.male||c.tees.female||[])[0]&&(c.tees.male||c.tees.female||[])[0].number_of_holes)||'';var ukBadge=c._source==='uk'?'<span style="font-size:10px;background:var(--gl);color:var(--gt);padding:1px 5px;border-radius:4px;margin-left:4px">UK</span>':'';return'<div class="sri" onclick="loadCourse('+i+')" data-source="'+(c._source||'global')+'"><div class="srn">'+(c.club_name||'Unknown')+ukBadge+'</div><div class="srs">'+loc+(n?' · '+n+' holes':'')+'</div></div>';}).join('');
   }).catch(function(){r.innerHTML='<div class="srst">Search failed — check your connection.</div>';});
 }
-
 function loadCourse(idx){
   var c=window._sr&&window._sr[idx];if(!c)return;
   var r=$('srch-res');
