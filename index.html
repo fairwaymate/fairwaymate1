@@ -44,15 +44,15 @@ const FieldValue=firebase.firestore.FieldValue;
 </script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{--g:#2a5a2a;--gl:#e8f0e8;--gt:#1f4a1f;--b:#378ADD;--bl:#E6F1FB;--bt:#185FA5;--bg:#f5f5f0;--card:#fff;--bdr:rgba(0,0,0,.10);--bdm:rgba(0,0,0,.18);--t:#1a1a18;--t2:#666660;--t3:#999994;--r:12px;--rs:8px}
-@media(prefers-color-scheme:dark){:root{--bg:#1a1a18;--card:#252523;--bdr:rgba(255,255,255,.10);--bdm:rgba(255,255,255,.18);--t:#f0f0ec;--t2:#aaa9a3;--t3:#6e6e68;--gl:#0d2410;--gt:#8ab88a;--bl:#0c2a45;--bt:#85B7EB}}
+:root{--g:#2d6a2d;--gl:#dff0df;--gt:#1f4a1f;--gold:#d4a843;--gold-l:#fdf3dc;--gold-t:#8a6510;--b:#378ADD;--bl:#E6F1FB;--bt:#185FA5;--bg:#f5f5f0;--card:#fff;--bdr:rgba(0,0,0,.10);--bdm:rgba(0,0,0,.18);--t:#1a1a18;--t2:#666660;--t3:#999994;--r:12px;--rs:8px}
+@media(prefers-color-scheme:dark){:root{--bg:#1a1a18;--card:#252523;--bdr:rgba(255,255,255,.10);--bdm:rgba(255,255,255,.18);--t:#f0f0ec;--t2:#aaa9a3;--t3:#6e6e68;--gl:#0d2410;--gt:#8ab88a;--gold:#d4a843;--gold-l:#2a2010;--gold-t:#d4a843;--bl:#0c2a45;--bt:#85B7EB}}
 html,body{height:100%;background:var(--bg);color:var(--t);font-family:'DM Sans',sans-serif;font-size:15px}
 body{display:flex;flex-direction:column;overflow:hidden}
 .page{display:none;flex-direction:column;height:100%;overflow:hidden}
 #pg-auth{background:var(--bg);align-items:center;justify-content:center;padding:20px;overflow-y:auto}
 .auth-wrap{width:100%;max-width:400px;padding:20px 0}
 .auth-logo{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--gt);text-align:center;margin-bottom:4px}
-.auth-logo span{color:#c9a84c}
+.auth-logo span{color:var(--gold)}
 .auth-tag{text-align:center;font-size:14px;color:var(--t2);margin-bottom:28px}
 .auth-card{background:var(--card);border-radius:var(--r);border:.5px solid var(--bdr);padding:24px;box-shadow:0 4px 24px rgba(0,0,0,.06)}
 .auth-title{font-size:20px;font-weight:600;margin-bottom:18px}
@@ -68,14 +68,14 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .divider::before,.divider::after{content:'';flex:1;height:.5px;background:var(--bdr)}
 .auth-lnk{font-size:13px;color:var(--t2);text-align:center;margin-top:12px}
 .auth-lnk a{color:var(--gt);cursor:pointer;font-weight:500}
-.trial-note{background:var(--gl);border-radius:var(--rs);padding:10px 14px;font-size:12px;color:var(--gt);margin-bottom:12px}
+.trial-note{background:var(--gold-l);border-radius:var(--rs);padding:10px 14px;font-size:12px;color:var(--gold-t);margin-bottom:12px;border:.5px solid var(--gold)}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 #pg-app{background:var(--bg)}
 .hdr{background:var(--card);border-bottom:.5px solid var(--bdr);padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
 .logo{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--gt);display:flex;align-items:center;gap:6px}
-.logo span{color:#c9a84c}
+.logo span{color:var(--gold)}
 .usr-row{display:flex;align-items:center;gap:8px}
-.tbadge{font-size:11px;background:var(--gl);color:var(--gt);padding:3px 8px;border-radius:20px;font-weight:500}
+.tbadge{font-size:11px;background:var(--gold-l);color:var(--gold-t);border:.5px solid var(--gold);padding:3px 8px;border-radius:20px;font-weight:600}
 .ava{width:32px;height:32px;border-radius:50%;background:var(--g);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;flex-shrink:0}
 .ava img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .ava-lg{width:72px;height:72px;border-radius:50%;background:var(--g);color:#fff;font-size:24px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;margin:0 auto 8px}
@@ -120,7 +120,7 @@ table.sc input[type=number]::-webkit-inner-spin-button{display:none}
 table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
 .sg{color:var(--g);font-weight:600}.snorm{color:var(--t2)}.sbad{color:#D85A30}
 .ve{color:#8B5CF6;font-weight:700}.vb{color:var(--g);font-weight:700}.vp{color:var(--t2)}.vbo{color:#E8820C;font-weight:600}.vd{color:#D85A30;font-weight:700}.vw{color:#B91C1C;font-weight:700}
-.wf{background:var(--gl);color:var(--gt);font-weight:600;font-size:10px}
+.wf{background:var(--gold);color:#fff;font-weight:700;font-size:10px}
 .wa{background:var(--bl);color:var(--bt);font-weight:600;font-size:10px}
 .wh{color:var(--t3);font-size:10px}
 .metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
@@ -140,7 +140,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
 .rhdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
 .rdate{font-size:14px;font-weight:600}.rcrs{font-size:11px;color:var(--t2);margin-bottom:8px}
 .rpill{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
-.rpg{background:var(--gl);color:var(--gt)}.rps{background:#F5F0FF;color:#6D28D9}
+.rpg{background:var(--gold-l);color:var(--gold-t);border:.5px solid var(--gold);font-weight:700}.rps{background:#F5F0FF;color:#6D28D9}
 .rscores{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .rscores.s1{grid-template-columns:1fr}.rscores.s3{grid-template-columns:repeat(3,1fr)}.rscores.s4{grid-template-columns:repeat(2,1fr)}.rscores.s5{grid-template-columns:repeat(3,1fr)}
 .rp{background:var(--bg);border-radius:var(--rs);padding:8px}
@@ -158,7 +158,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
 .sri{padding:10px 14px;border-bottom:.5px solid var(--bdr);cursor:pointer;background:var(--card)}.sri:last-child{border-bottom:none}.sri:active{background:var(--gl)}
 .srn{font-size:14px;font-weight:500}.srs{font-size:11px;color:var(--t2);margin-top:2px}
 .srst{padding:14px;text-align:center;font-size:13px;color:var(--t2);background:var(--card);border-radius:var(--rs)}
-.lbanner{background:#FFF8E7;border:.5px solid #E6A817;border-radius:var(--rs);padding:10px 14px;margin-top:8px;font-size:13px;color:#7A5200;display:none}
+.lbanner{background:#FFF8E7;border:.5px solid #E6A817;border-radius:var(--rs);padding:10px 14px;margin-top:8px;font-size:13px;color:var(--gold-t);display:none}
 .csec{margin-bottom:20px}.cttl{font-size:14px;font-weight:600;margin-bottom:8px}
 .cwrap{position:relative;width:100%;height:220px}
 .leg{display:flex;gap:12px;margin-bottom:8px;font-size:12px;color:var(--t2);flex-wrap:wrap}
@@ -177,7 +177,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
 .invite-code-val{font-size:34px;font-weight:700;color:var(--gt);letter-spacing:8px;font-family:'DM Sans',sans-serif}
 .invite-code-sub{font-size:11px;color:var(--gt);margin-top:4px;opacity:.75}
 .asec{background:var(--card);border-radius:var(--r);border:.5px solid var(--bdr);padding:16px;margin-bottom:12px}
-.pchip{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;background:var(--gl);color:var(--gt);margin-bottom:12px}
+.pchip{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;background:var(--gold-l);color:var(--gold-t);border:.5px solid var(--gold);margin-bottom:12px}
 .member-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:.5px solid var(--bdr)}
 .member-row:last-child{border-bottom:none}
 .member-info{font-size:14px;font-weight:500}
@@ -207,7 +207,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
         <path d="M24 74 Q38 80 54 76" stroke="#6a9a6a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
         <circle cx="57" cy="77" r="6" fill="#f0ede8"/>
       </svg>
-      <div style="font-family:'Playfair Display',serif;font-size:36px;font-weight:700;line-height:1;letter-spacing:-0.3px;color:var(--gt)">Fairway<span style="color:#c9a84c">Mate</span></div>
+      <div style="font-family:'Playfair Display',serif;font-size:36px;font-weight:700;line-height:1;letter-spacing:-0.3px;color:var(--gt)">Fairway<span style="color:var(--gold)">Mate</span></div>
     </div>
     <div class="auth-tag">Golf scores sorted — for you &amp; your mates</div>
     <div id="a-login" class="auth-card">
@@ -669,7 +669,7 @@ function showApp(){
 
 function updateBadge(){
   var plan=getPlan();var days=trialDays();var b=$('tbadge');if(!b)return;
-  if(plan==='premium'){b.textContent='Premium ⭐';b.style.background='#c9a84c22';b.style.color='#7A5200';}
+  if(plan==='premium'){b.textContent='Premium ⭐';b.style.background='var(--gold-l)';b.style.color='var(--gold-t)';}
   else if(plan==='trial'){b.textContent=days+' days free';}
   else{b.textContent='Free plan';b.style.background='var(--bg)';b.style.color='var(--t2)';}
 }
@@ -1459,7 +1459,7 @@ function renderCharts(){
   var gc=isDark?'rgba(255,255,255,.08)':'rgba(0,0,0,.06)',tc=isDark?'#aaa9a3':'#666660';
   var stabD={},grossD={};showMs.forEach(function(m){stabD[m.uid]=[];grossD[m.uid]=[];});
   rs.forEach(function(r){showMs.forEach(function(m){var plays=(r.playerIds||Object.keys(r.playerData||{})).indexOf(m.uid)>=0;var p=r.playerData&&r.playerData[m.uid];stabD[m.uid].push(plays&&p?p.stab:null);grossD[m.uid].push(plays&&p&&p.gross?p.gross:null);});});
-  ct.innerHTML=(isLimited?'<div style="background:#FFF8E7;border:.5px solid #E6A817;border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;font-size:13px;color:#7A5200">📊 Showing last '+chartLimit+' rounds. <a onclick="showUpgrade(\'groupRounds\')" style="font-weight:600;cursor:pointer;color:var(--gt)">Upgrade for full score charts →</a></div>':'')+
+  ct.innerHTML=(isLimited?'<div style="background:#FFF8E7;border:.5px solid #E6A817;border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--gold-t)">📊 Showing last '+chartLimit+' rounds. <a onclick="showUpgrade(\'groupRounds\')" style="font-weight:600;cursor:pointer;color:var(--gt)">Upgrade for full score charts →</a></div>':'')+
     '<div class="leg">'+showMs.map(function(m){return'<span><span class="lsq" style="background:'+mColor(m.uid)+'"></span>'+m.name+'</span>';}).join('')+'</div>'+
     '<div class="csec"><div class="cttl">Stableford points per round</div><div class="cwrap"><canvas id="ch-s"></canvas></div></div>'+
     '<div class="csec"><div class="cttl">Gross score per round</div><div class="cwrap"><canvas id="ch-g"></canvas></div></div>';
@@ -1480,7 +1480,7 @@ function renderAcc(){
   var h=$('acc-hcp');if(h)h.value=up.handicap||18;
   var plan=getPlan(),days=trialDays();
   var ap=$('acc-plan');
-  if(ap){if(plan==='premium'){ap.textContent='⭐ Premium';ap.style.background='#c9a84c22';ap.style.color='#7A5200';}else if(plan==='trial'){ap.textContent='Free trial — '+days+' days remaining';}else{ap.textContent='Free plan';}}
+  if(ap){if(plan==='premium'){ap.textContent='⭐ Premium';ap.style.background='var(--gold-l)';ap.style.color='var(--gold-t)';}else if(plan==='trial'){ap.textContent='Free trial — '+days+' days remaining';}else{ap.textContent='Free plan';}}
   var ae=$('acc-email');if(ae)ae.textContent=cu.email;
   renderAccGroup();
   renderUpgradeSection();
@@ -1532,10 +1532,10 @@ function renderUpgradeSection(){
   var usedRounds=groupRoundCount(),usedSearches=searchCount();
 
   if(plan==='premium'){
-    wrap.innerHTML='<div class="asec" style="border-color:#c9a84c">'+
+    wrap.innerHTML='<div class="asec" style="border-color:var(--gold)">'+
       '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'+
-        '<div style="width:40px;height:40px;border-radius:50%;background:#c9a84c22;display:flex;align-items:center;justify-content:center;font-size:20px">⭐</div>'+
-        '<div><div style="font-size:15px;font-weight:700;color:#7A5200">You\'re on Premium</div><div style="font-size:12px;color:var(--t2)">Full access to all features</div></div>'+
+        '<div style="width:40px;height:40px;border-radius:50%;background:var(--gold-l);display:flex;align-items:center;justify-content:center;font-size:20px">⭐</div>'+
+        '<div><div style="font-size:15px;font-weight:700;color:var(--gold-t)">You\'re on Premium</div><div style="font-size:12px;color:var(--t2)">Full access to all features</div></div>'+
       '</div>'+
     '</div>';
     return;
@@ -1548,7 +1548,7 @@ function renderUpgradeSection(){
         '<div style="font-size:12px;color:rgba(255,255,255,.8);margin-top:3px">You currently have <strong>Premium access</strong> — enjoy it while it lasts!</div>'+
       '</div>'
     : '<div style="background:#FFF8E7;border:.5px solid #E6A817;border-radius:var(--rs);padding:10px 14px;margin-bottom:14px;text-align:center">'+
-        '<div style="font-size:13px;font-weight:700;color:#7A5200">You\'re on the Free plan</div>'+
+        '<div style="font-size:13px;font-weight:700;color:var(--gold-t)">You\'re on the Free plan</div>'+
         '<div style="font-size:12px;color:#92670a;margin-top:3px">Upgrade to keep full access to all features</div>'+
       '</div>';
 
