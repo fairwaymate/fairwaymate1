@@ -608,7 +608,7 @@ function $(id){return document.getElementById(id);}
 function toast(msg,type){var e=$('toast');e.textContent=msg;e.className='toast'+(type==='err'?' t-err':type==='info'?' t-info':'')+' show';clearTimeout(e._t);e._t=setTimeout(function(){e.classList.remove('show');},3500);}
 function showPage(id){document.querySelectorAll('.page').forEach(function(p){p.style.display='none';});$(id).style.display='flex';}
 function showSection(s){['login','signup','forgot'].forEach(function(x){var e=$('a-'+x);if(e)e.style.display='none';});var e=$('a-'+s);if(e)e.style.display='';}
-function errMsg(code){var m={'auth/user-not-found':'No account with that email','auth/wrong-password':'Incorrect password','auth/email-already-in-use':'Email already registered','auth/weak-password':'Password needs 6+ characters','auth/invalid-email':'Invalid email address','auth/too-many-requests':'Too many attempts — try later','auth/invalid-credential':'Incorrect email or password'};return m[code]||'Something went wrong. Please try again.';}
+function errMsg(code){var m={'auth/user-not-found':'No account found with that email address','auth/wrong-password':'Incorrect password — please try again','auth/email-already-in-use':'That email is already registered — try signing in','auth/weak-password':'Password needs at least 6 characters','auth/invalid-email':'Please enter a valid email address','auth/too-many-requests':'Too many failed attempts — please try again later','auth/invalid-credential':'Incorrect email or password — please check and try again','auth/network-request-failed':'Network error — please check your connection','auth/popup-blocked':'Popup was blocked — please allow popups and try again','auth/cancelled-popup-request':'Sign in cancelled'};return m[code]||'Sign in failed ('+code+') — please try again.';}
 function setLoading(id,loading,label){var b=$(id);if(!b)return;b.disabled=loading;b.textContent=loading?'Please wait…':(label||b.textContent);}
 function genCode(){return(Math.random().toString(36).slice(2,8)).toUpperCase().slice(0,6);}
 
@@ -652,7 +652,7 @@ function loadProfile(user){
       if(up.trialStart&&up.trialStart.toDate)up.trialStart=up.trialStart.toDate();
     }
     loadGroups(user.uid);
-  }).catch(function(e){console.error('loadProfile error:',e);loadGroups(user.uid);});
+  }).catch(function(e){console.error('loadProfile error:',e.code,e.message);loadGroups(user.uid);});
 }
 
 function loadGroups(uid){
@@ -664,7 +664,7 @@ function loadGroups(uid){
     cg=pref||allGroups[0]||null;
     if(cg){subRounds();loadMemberPhotos();}
     showApp();
-  }).catch(function(e){console.error('loadGroups error:',e);showApp();});
+  }).catch(function(e){console.error('loadGroups error:',e.code,e.message);toast('Failed to load your account — '+errMsg(e.code),'err');showApp();});
 }
 
 function subRounds(){
@@ -727,10 +727,27 @@ function updateGroupUI(){
 
 function doLogin(){
   var em=$('l-email').value.trim(),pw=$('l-pass').value;
-  if(!em||!pw){toast('Please fill in all fields','err');return;}
+  if(!em){toast('Please enter your email','err');return;}
+  if(!pw){toast('Please enter your password','err');return;}
   setLoading('l-btn',true);
   auth.signInWithEmailAndPassword(em,pw)
-    .catch(function(e){toast(errMsg(e.code),'err');setLoading('l-btn',false,'Sign in');});
+    .then(function(){
+      setLoading('l-btn',false,'Sign in');
+      // onAuthStateChanged will handle navigation
+    })
+    .catch(function(e){
+      console.error('Login error:',e.code,e.message);
+      var msg=errMsg(e.code);
+      toast(msg,'err');
+      setLoading('l-btn',false,'Sign in');
+      // Highlight the relevant field
+      if(e.code==='auth/user-not-found'||e.code==='auth/invalid-email'){
+        var ef=$('l-email');if(ef){ef.style.borderColor='#ef4444';setTimeout(function(){ef.style.borderColor='';},3000);}
+      }
+      if(e.code==='auth/wrong-password'||e.code==='auth/invalid-credential'){
+        var pf=$('l-pass');if(pf){pf.style.borderColor='#ef4444';setTimeout(function(){pf.style.borderColor='';},3000);}
+      }
+    });
 }
 
 function doSignup(){
@@ -747,8 +764,23 @@ function doSignup(){
 
 function doGoogle(){
   var provider=new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).catch(function(e){if(e.code!=='auth/popup-closed-by-user')toast(errMsg(e.code),'err');});
+  // Use redirect on mobile/PWA, popup on desktop
+  var isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)||window.matchMedia('(display-mode: standalone)').matches;
+  if(isMobile){
+    auth.signInWithRedirect(provider).catch(function(e){toast(errMsg(e.code),'err');});
+  } else {
+    auth.signInWithPopup(provider).catch(function(e){if(e.code!=='auth/popup-closed-by-user')toast(errMsg(e.code),'err');});
+  }
 }
+
+// Handle redirect result on page load
+auth.getRedirectResult().then(function(result){
+  if(result&&result.user){
+    // Signed in via redirect — handled by onAuthStateChanged
+  }
+}).catch(function(e){
+  if(e.code&&e.code!=='auth/no-auth-event')toast(errMsg(e.code),'err');
+});
 
 function doForgot(){
   var em=$('f-email').value.trim();
