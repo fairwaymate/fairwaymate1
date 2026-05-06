@@ -486,6 +486,11 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
   <div class="mod">
     <div class="mhdr"><div class="mtitle" id="mtitle"></div><button class="mclose" onclick="closeMod()">✕</button></div>
     <div class="msub" id="msub"></div>
+    <div class="sv-toggle" style="margin-bottom:12px">
+      <button class="sv-pill" id="hsv-gross" onclick="setHSV('gross')">Gross</button>
+      <button class="sv-pill" id="hsv-net" onclick="setHSV('net')">Net</button>
+      <button class="sv-pill active" id="hsv-stab" onclick="setHSV('stab')">Stableford</button>
+    </div>
     <div id="mbody"></div>
   </div>
 </div>
@@ -1607,13 +1612,28 @@ function delRound(id){
   db.collection('groups').doc(cg.id).collection('rounds').doc(id).delete().then(function(){toast('Round deleted');}).catch(function(){toast('Failed to delete','err');});
 }
 
+var histScoreView='stab';
+var _currentRoundId=null;
+
+function setHSV(v){
+  histScoreView=v;
+  ['gross','net','stab'].forEach(function(t){
+    var el=$('hsv-'+t);if(el)el.classList.toggle('active',t===v);
+  });
+  if(_currentRoundId)viewRound(_currentRoundId);
+}
+
 function viewRound(id){
+  _currentRoundId=id;
   var r=rounds.find(function(x){return x.id===id;});if(!r)return;
   var C=COURSES[r.course]||{holes:[],halves:[{l:'All Holes',t:'Total',s:0,e:0}]};
   var fd=function(d){try{var p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}catch(e){return d||'';}};
   var pd=r.playerData||{},uids=r.playerIds||Object.keys(pd);
   $('mtitle').textContent=r.courseName||C.name||'Round';
   $('msub').textContent=fd(r.date)+' · '+(r.mode==='solo'?'Solo round':'Mates round · '+uids.length+' players');
+  var showHGross=(histScoreView==='gross');
+  var showHNet=(histScoreView==='net');
+  var showHStab=(histScoreView==='stab');
   var html='';
   C.halves.forEach(function(half){
     var hs=C.holes.slice(half.s,half.e);
@@ -1622,14 +1642,28 @@ function viewRound(id){
     html+='<tr><td class="lbl">Par</td>'+hs.map(function(h){return'<td>'+h.par+'</td>';}).join('')+'<td class="tot">'+hs.reduce(function(a,h){return a+h.par;},0)+'</td></tr>';
     uids.forEach(function(uid,mi){
       var p=pd[uid];if(!p)return;var col=COLORS[mi%COLORS.length];var tg=0;
+      // Always show shots
       html+='<tr><td class="lbl" style="color:'+col+'">'+p.name+' shots</td>';
       hs.forEach(function(h){var ai=C.holes.findIndex(function(x){return x.n===h.n;});var v=(p.shots&&p.shots[ai])||0;tg+=v;html+='<td>'+(v||'—')+'</td>';});
       html+='<td class="tot">'+(tg||'—')+'</td></tr>';
-      if(r.mode==='solo'){var tv=0,tp=0;html+='<tr><td class="lbl">vs Par</td>';hs.forEach(function(h){var ai=C.holes.findIndex(function(x){return x.n===h.n;});var v=(p.shots&&p.shots[ai])||0;if(v>0){var d=v-h.par;tv+=d;tp+=h.par;html+='<td class="'+vpc(d)+'">'+vpt(d)+'</td>';}else html+='<td>—</td>';});html+='<td class="tot '+vpc(tv)+'">'+(tp>0?vpt(tv):'—')+'</td></tr>';}
-      var ts=0;html+='<tr><td class="lbl" style="color:'+col+'">'+p.name.split(' ')[0]+' Stab</td>';
-      hs.forEach(function(h){var ai=C.holes.findIndex(function(x){return x.n===h.n;});var v=(p.shots&&p.shots[ai])||0;if(v>0){var sp=stabPts(v,h.par,h.si,p.handicap||18,r.course||'silkstone');ts+=sp;html+='<td class="'+(sp>=3?'sg':sp>=2?'snorm':'sbad')+'">'+sp+'</td>';}else html+='<td class="snorm">—</td>';});
-      html+='<td class="tot">'+(ts||'—')+'</td></tr>';
-      if(r.mode!=='solo'){var tv2=0,tp2=0;html+='<tr><td class="lbl" style="color:'+col+'">'+p.name.split(' ')[0]+' vs Par</td>';hs.forEach(function(h){var ai=C.holes.findIndex(function(x){return x.n===h.n;});var v=(p.shots&&p.shots[ai])||0;if(v>0){var d=v-h.par;tv2+=d;tp2+=h.par;html+='<td class="'+vpc(d)+'">'+vpt(d)+'</td>';}else html+='<td>—</td>';});html+='<td class="tot '+vpc(tv2)+'">'+(tp2>0?vpt(tv2):'—')+'</td></tr>';}
+      // Gross view
+      if(showHGross){
+        var tv=0,tp=0;html+='<tr><td class="lbl" style="color:'+col+'">'+p.name.split(' ')[0]+' vs Par</td>';
+        hs.forEach(function(h){var ai=C.holes.findIndex(function(x){return x.n===h.n;});var v=(p.shots&&p.shots[ai])||0;if(v>0){var d=v-h.par;tv+=d;tp+=h.par;html+='<td class="'+vpc(d)+'">'+vpt(d)+'</td>';}else html+='<td>—</td>';});
+        html+='<td class="tot '+vpc(tv)+'">'+(tp>0?vpt(tv):'—')+'</td></tr>';
+      }
+      // Net view
+      if(showHNet){
+        var tn=0;html+='<tr><td class="lbl" style="color:'+col+'">'+p.name.split(' ')[0]+' net</td>';
+        hs.forEach(function(h){var ai=C.holes.findIndex(function(x){return x.n===h.n;});var v=(p.shots&&p.shots[ai])||0;if(v>0){var hcp=p.handicap||18;var hcpS=Math.floor(hcp/C.holes.length)+(h.si<=(hcp%C.holes.length)?1:0);var netH=v-hcpS;tn+=netH;var nd=netH-h.par;html+='<td class="'+vpc(nd)+'">'+vpt(nd)+'</td>';}else html+='<td>—</td>';});
+        html+='<td class="tot '+vpc(tn-hs.reduce(function(a,h){return a+h.par;},0))+'">'+(tn>0?vpt(tn-hs.reduce(function(a,h){return a+h.par;},0)):'—')+'</td></tr>';
+      }
+      // Stableford view
+      if(showHStab){
+        var ts=0;html+='<tr><td class="lbl" style="color:'+col+'">'+p.name.split(' ')[0]+' Stab</td>';
+        hs.forEach(function(h){var ai=C.holes.findIndex(function(x){return x.n===h.n;});var v=(p.shots&&p.shots[ai])||0;if(v>0){var sp=stabPts(v,h.par,h.si,p.handicap||18,r.course||'');ts+=sp;html+='<td class="'+(sp>=3?'sg':sp>=2?'snorm':'sbad')+'">'+sp+'</td>';}else html+='<td class="snorm">—</td>';});
+        html+='<td class="tot">'+(ts||'—')+'</td></tr>';
+      }
     });
     html+='</table></div></div>';
   });
