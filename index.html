@@ -197,6 +197,9 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
 .hole-cell-label{font-size:10px;color:var(--t3);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
 .hole-cell input{width:100%;text-align:center;border:.5px solid var(--bdm);border-radius:4px;padding:4px;font-size:14px;font-weight:700;background:var(--card);color:var(--t);font-family:'DM Sans',sans-serif}
 .hole-header{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;margin-top:16px}
+.sv-toggle{display:flex;gap:6px;margin-bottom:12px}
+.sv-pill{flex:1;padding:7px 4px;border-radius:var(--rs);border:.5px solid var(--bdm);background:var(--bg);color:var(--t2);font-size:13px;font-weight:500;cursor:pointer;text-align:center;font-family:'DM Sans',sans-serif;transition:all .15s}
+.sv-pill.active{background:var(--g);border-color:var(--g);color:#fff;font-weight:600}
 </style>
 </head>
 <body>
@@ -416,6 +419,13 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
         <div id="hcap-fields"></div>
       </div>
 
+      <div id="sv-toggle-wrap" style="display:none">
+        <div class="sv-toggle">
+          <button class="sv-pill" id="sv-gross" onclick="setSV('gross')">Gross</button>
+          <button class="sv-pill" id="sv-net" onclick="setSV('net')">Net</button>
+          <button class="sv-pill active" id="sv-stab" onclick="setSV('stab')">Stableford</button>
+        </div>
+      </div>
       <div id="sc-container"></div>
       <div class="card"><div class="ctitle">Round summary</div><div id="sum-content"></div></div>
       <button class="btn btnp" onclick="saveRound()">Save Round ⛳</button>
@@ -1327,11 +1337,32 @@ function loadCourse(idx){
 }
 
 // ── Scorecard ─────────────────────────────────────────────
+var scoreView='stab'; // 'gross', 'net', 'stab'
+
+function setSV(v){
+  scoreView=v;
+  ['gross','net','stab'].forEach(function(t){
+    var el=$('sv-'+t);if(el)el.classList.toggle('active',t===v);
+  });
+  // Save preference to profile
+  if(up){up.scoreView=v;db.collection('users').doc(cu.uid).update({scoreView:v}).catch(function(){});}
+  buildSC();
+}
+
 function buildSC(){
   var ct=$('sc-container');if(!ct)return;
-  var C=ac?COURSES[ac]:null;if(!C){ct.innerHTML='';return;}
+  var C=ac?COURSES[ac]:null;if(!C){ct.innerHTML='';var tw=$('sv-toggle-wrap');if(tw)tw.style.display='none';return;}
   var playing=getMembers().filter(function(m){return selectedPlayers.indexOf(m.uid)>=0;});
   if(!playing.length){ct.innerHTML='';return;}
+
+  // Show toggle and apply saved preference
+  var tw=$('sv-toggle-wrap');if(tw)tw.style.display='block';
+  if(up&&up.scoreView&&up.scoreView!==scoreView){scoreView=up.scoreView;['gross','net','stab'].forEach(function(t){var el=$('sv-'+t);if(el)el.classList.toggle('active',t===scoreView);});}
+
+  var showGross=(scoreView==='gross');
+  var showNet=(scoreView==='net');
+  var showStab=(scoreView==='stab');
+
   var html='';
   C.halves.forEach(function(half,hi){
     var hs=C.holes.slice(half.s,half.e);
@@ -1339,36 +1370,57 @@ function buildSC(){
     html+='<tr><th class="lbl">Hole</th>'+hs.map(function(h){return'<th>'+h.n+'</th>';}).join('')+'<th>'+half.t+'</th></tr>';
     html+='<tr><td class="lbl">Par</td>'+hs.map(function(h){return'<td>'+h.par+'</td>';}).join('')+'<td class="tot">'+hs.reduce(function(a,h){return a+h.par;},0)+'</td></tr>';
     html+='<tr><td class="lbl" style="color:var(--t3);font-size:10px">SI</td>'+hs.map(function(h){return'<td style="color:var(--t3);font-size:10px">'+h.si+'</td>';}).join('')+'<td></td></tr>';
+
+    // Always show shot input rows
     playing.forEach(function(m){
       var col=mColor(m.uid);
       html+='<tr><td class="lbl" style="color:'+col+'">'+m.name.split(' ')[0]+' shots</td>';
       hs.forEach(function(h){html+='<td><input type="number" id="sf-'+m.uid+'-'+h.n+'" min="1" max="15" inputmode="numeric" onchange="recalc()"></td>';});
       html+='<td class="tot" id="tg-'+m.uid+'-'+hi+'">—</td></tr>';
     });
-    if(rm==='solo'&&playing[0]){
-      html+='<tr><td class="lbl">vs Par</td>';
-      hs.forEach(function(h){html+='<td id="vp-'+h.n+'" class="vp">—</td>';});
-      html+='<td class="tot" id="vptot-'+hi+'">—</td></tr>';
+
+    // Gross: vs par rows
+    if(showGross){
+      if(rm==='solo'&&playing[0]){
+        html+='<tr><td class="lbl">vs Par</td>';
+        hs.forEach(function(h){html+='<td id="vp-'+h.n+'" class="vp">—</td>';});
+        html+='<td class="tot" id="vptot-'+hi+'">—</td></tr>';
+      }
+      if(rm==='mates'){
+        playing.forEach(function(m){
+          var col=mColor(m.uid);
+          html+='<tr><td class="lbl" style="color:'+col+'">'+m.name.split(' ')[0]+' vs Par</td>';
+          hs.forEach(function(h){html+='<td id="gvp-'+m.uid+'-'+h.n+'" class="vp">—</td>';});
+          html+='<td class="tot" id="gvptot-'+m.uid+'-'+hi+'">—</td></tr>';
+        });
+      }
     }
-    if(rm==='mates'){
+
+    // Net: net score rows
+    if(showNet){
       playing.forEach(function(m){
         var col=mColor(m.uid);
-        html+='<tr><td class="lbl" style="color:'+col+'">'+m.name.split(' ')[0]+' vs Par</td>';
-        hs.forEach(function(h){html+='<td id="gvp-'+m.uid+'-'+h.n+'" class="vp">—</td>';});
-        html+='<td class="tot" id="gvptot-'+m.uid+'-'+hi+'">—</td></tr>';
+        html+='<tr><td class="lbl" style="color:'+col+'">'+m.name.split(' ')[0]+' net</td>';
+        hs.forEach(function(h){html+='<td id="nt-'+m.uid+'-'+h.n+'" class="vp">—</td>';});
+        html+='<td class="tot" id="tn-'+m.uid+'-'+hi+'">—</td></tr>';
       });
     }
-    playing.forEach(function(m){
-      var col=mColor(m.uid);
-      html+='<tr><td class="lbl" style="color:'+col+'">'+m.name.split(' ')[0]+' Stab</td>';
-      hs.forEach(function(h){html+='<td id="st-'+m.uid+'-'+h.n+'" class="snorm">—</td>';});
-      html+='<td class="tot" id="ts-'+m.uid+'-'+hi+'">—</td></tr>';
-    });
-    if(rm==='mates'&&playing.length>=2){
-      html+='<tr><td class="lbl">Stab leader</td>';
-      hs.forEach(function(h){html+='<td id="hl-'+h.n+'" class="wh">—</td>';});
-      html+='<td id="hltot-'+hi+'" class="tot" style="font-size:10px"></td></tr>';
+
+    // Stableford: stab rows + leader
+    if(showStab){
+      playing.forEach(function(m){
+        var col=mColor(m.uid);
+        html+='<tr><td class="lbl" style="color:'+col+'">'+m.name.split(' ')[0]+' Stab</td>';
+        hs.forEach(function(h){html+='<td id="st-'+m.uid+'-'+h.n+'" class="snorm">—</td>';});
+        html+='<td class="tot" id="ts-'+m.uid+'-'+hi+'">—</td></tr>';
+      });
+      if(rm==='mates'&&playing.length>=2){
+        html+='<tr><td class="lbl">Stab leader</td>';
+        hs.forEach(function(h){html+='<td id="hl-'+h.n+'" class="wh">—</td>';});
+        html+='<td id="hltot-'+hi+'" class="tot" style="font-size:10px"></td></tr>';
+      }
     }
+
     html+='</table></div></div>';
   });
   ct.innerHTML=html;recalc();
@@ -1393,9 +1445,15 @@ function recalc(){
         ht[hi][m.uid].g+=v;ht[hi][m.uid].s+=sp;
         var el=$('st-'+m.uid+'-'+hole.n);
         if(el){el.textContent=sp;el.className=sp>=3?'sg':sp>=2?'snorm':'sbad';}
+        // Net score per hole
+        var hcpStrokes=Math.floor(hcap(m.uid)/C.holes.length)+(hole.si<=(hcap(m.uid)%C.holes.length)?1:0);
+        var netHole=v-hcpStrokes;
+        var nel=$('nt-'+m.uid+'-'+hole.n);
+        if(nel){var nd=netHole-hole.par;nel.textContent=vpt(nd);nel.className=vpc(nd);}
       } else {
         stabs[m.uid]=0;
         var el=$('st-'+m.uid+'-'+hole.n);if(el){el.textContent='—';el.className='snorm';}
+        var nel=$('nt-'+m.uid+'-'+hole.n);if(nel){nel.textContent='—';nel.className='vp';}
       }
     });
     if(rm==='solo'&&playing[0]){
@@ -1426,6 +1484,9 @@ function recalc(){
       var tg=$('tg-'+m.uid+'-'+hi),ts=$('ts-'+m.uid+'-'+hi);
       if(tg)tg.textContent=ht[hi][m.uid].g||'—';
       if(ts)ts.textContent=ht[hi][m.uid].s||'—';
+      // Net total for half
+      var tn=$('tn-'+m.uid+'-'+hi);
+      if(tn){var ng=ht[hi][m.uid].g;var hp=hcap(m.uid);var hs2=C.holes.slice(C.halves[hi].s,C.halves[hi].e);var hcpHalf=hs2.reduce(function(a,h){return a+Math.floor(hp/C.holes.length)+(h.si<=(hp%C.holes.length)?1:0);},0);var nd2=ng-hcpHalf;if(ng>0){tn.textContent=vpt(nd2);tn.className='tot '+vpc(nd2);}else{tn.textContent='—';tn.className='tot';}}
       if(rm==='mates'){var p=C.holes.slice(half.s,half.e).reduce(function(a,h){return a+h.par;},0);var vt=$('gvptot-'+m.uid+'-'+hi);if(vt){var g=ht[hi][m.uid].g;if(g>0){var d=g-p;vt.textContent=vpt(d);vt.className='tot '+vpc(d);}else{vt.textContent='—';vt.className='tot';}}}
     });
     if(rm==='solo'&&playing[0]){
