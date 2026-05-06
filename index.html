@@ -107,6 +107,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .ppill.me{font-weight:600}
 .mpill,.cpill{flex:1;padding:9px 8px;border-radius:var(--rs);border:.5px solid var(--bdm);background:var(--bg);color:var(--t2);font-size:13px;font-weight:500;cursor:pointer;text-align:center;line-height:1.4;font-family:'DM Sans',sans-serif}
 .mpill.active,.cpill.active{background:var(--g);border-color:var(--g);color:#fff;font-weight:600}
+#pill-search.active{background:var(--gold);border-color:var(--gold-t);color:#fff;font-weight:700}
 .cbdg{display:block;font-size:10px;margin-top:2px;opacity:.7}
 .slbl{font-size:12px;color:var(--t2);font-weight:500}
 .sc-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -14px;padding:0 14px}
@@ -1279,7 +1280,10 @@ function searchCustomCourses(q){
 
 function toggleSearch(){
   var w=$('srchwrap');w.classList.toggle('open');
-  $('pill-search').classList.toggle('active',w.classList.contains('open'));
+  var isOpen=w.classList.contains('open');
+  $('pill-search').classList.toggle('active',isOpen);
+  // Deselect course pills when search opens
+  if(isOpen){document.querySelectorAll('.cpill:not(#pill-search)').forEach(function(p){p.classList.remove('active');});}
   if(w.classList.contains('open'))$('srchi').focus();
 }
 
@@ -1353,7 +1357,10 @@ function setSV(v){
   });
   // Save preference to profile
   if(up){up.scoreView=v;db.collection('users').doc(cu.uid).update({scoreView:v}).catch(function(){});}
-  buildSC();
+  // Show/hide rows by data-sv attribute WITHOUT rebuilding scorecard
+  document.querySelectorAll('[data-sv]').forEach(function(row){
+    row.style.display=row.getAttribute('data-sv')===v?'':'none';
+  });
 }
 
 function buildSC(){
@@ -1389,7 +1396,7 @@ function buildSC(){
     // Gross: vs par rows
     if(showGross){
       if(rm==='solo'&&playing[0]){
-        html+='<tr><td class="lbl">vs Par</td>';
+        html+='<tr data-sv="gross" style="display:none"><td class="lbl">vs Par</td>';
         hs.forEach(function(h){html+='<td id="vp-'+h.n+'" class="vp">—</td>';});
         html+='<td class="tot" id="vptot-'+hi+'">—</td></tr>';
       }
@@ -1407,7 +1414,7 @@ function buildSC(){
     if(showNet){
       playing.forEach(function(m){
         var col=mColor(m.uid);
-        html+='<tr><td class="lbl" style="color:'+col+'">'+m.name.split(' ')[0]+' net</td>';
+        html+='<tr data-sv="net" style="display:none"><td class="lbl" style="color:'+col+'">'+m.name.split(' ')[0]+' net</td>';
         hs.forEach(function(h){html+='<td id="nt-'+m.uid+'-'+h.n+'" class="vp">—</td>';});
         html+='<td class="tot" id="tn-'+m.uid+'-'+hi+'">—</td></tr>';
       });
@@ -1417,12 +1424,12 @@ function buildSC(){
     if(showStab){
       playing.forEach(function(m){
         var col=mColor(m.uid);
-        html+='<tr><td class="lbl" style="color:'+col+'">'+m.name.split(' ')[0]+' Stab</td>';
+        html+='<tr data-sv="stab"><td class="lbl" style="color:'+col+'">'+m.name.split(' ')[0]+' Stab</td>';
         hs.forEach(function(h){html+='<td id="st-'+m.uid+'-'+h.n+'" class="snorm">—</td>';});
         html+='<td class="tot" id="ts-'+m.uid+'-'+hi+'">—</td></tr>';
       });
       if(rm==='mates'&&playing.length>=2){
-        html+='<tr><td class="lbl">Stab leader</td>';
+        html+='<tr data-sv="stab"><td class="lbl">Stab leader</td>';
         hs.forEach(function(h){html+='<td id="hl-'+h.n+'" class="wh">—</td>';});
         html+='<td id="hltot-'+hi+'" class="tot" style="font-size:10px"></td></tr>';
       }
@@ -1723,7 +1730,10 @@ function setHSV(v){
   ['gross','net','stab'].forEach(function(t){
     var el=$('hsv-'+t);if(el)el.classList.toggle('active',t===v);
   });
-  if(_currentRoundId)viewRound(_currentRoundId);
+  // Show/hide history rows by data-hsv without rebuilding
+  document.querySelectorAll('[data-hsv]').forEach(function(row){
+    row.style.display=row.getAttribute('data-hsv')===v?'':'none';
+  });
 }
 
 function viewRound(id){
@@ -1734,9 +1744,6 @@ function viewRound(id){
   var pd=r.playerData||{},uids=r.playerIds||Object.keys(pd);
   $('mtitle').textContent=r.courseName||C.name||'Round';
   $('msub').textContent=fd(r.date)+' · '+(r.mode==='solo'?'Solo round':'Mates round · '+uids.length+' players');
-  var showHGross=(histScoreView==='gross');
-  var showHNet=(histScoreView==='net');
-  var showHStab=(histScoreView==='stab');
   var html='';
   C.halves.forEach(function(half){
     var hs=C.holes.slice(half.s,half.e);
@@ -1750,20 +1757,20 @@ function viewRound(id){
       hs.forEach(function(h){var ai=C.holes.findIndex(function(x){return x.n===h.n;});var v=(p.shots&&p.shots[ai])||0;tg+=v;html+='<td>'+(v||'—')+'</td>';});
       html+='<td class="tot">'+(tg||'—')+'</td></tr>';
       // Gross view
-      if(showHGross){
-        var tv=0,tp=0;html+='<tr><td class="lbl" style="color:'+col+'">'+p.name.split(' ')[0]+' vs Par</td>';
+      if(true){
+        var tv=0,tp=0;html+='<tr data-hsv="gross" style="display:none"><td class="lbl" style="color:'+col+'">'+p.name.split(' ')[0]+' vs Par</td>';
         hs.forEach(function(h){var ai=C.holes.findIndex(function(x){return x.n===h.n;});var v=(p.shots&&p.shots[ai])||0;if(v>0){var d=v-h.par;tv+=d;tp+=h.par;html+='<td class="'+vpc(d)+'">'+vpt(d)+'</td>';}else html+='<td>—</td>';});
         html+='<td class="tot '+vpc(tv)+'">'+(tp>0?vpt(tv):'—')+'</td></tr>';
       }
       // Net view
-      if(showHNet){
-        var tn=0;html+='<tr><td class="lbl" style="color:'+col+'">'+p.name.split(' ')[0]+' net</td>';
+      if(true){
+        var tn=0;html+='<tr data-hsv="net" style="display:none"><td class="lbl" style="color:'+col+'">'+p.name.split(' ')[0]+' net</td>';
         hs.forEach(function(h){var ai=C.holes.findIndex(function(x){return x.n===h.n;});var v=(p.shots&&p.shots[ai])||0;if(v>0){var hcp=p.handicap||18;var hcpS=Math.floor(hcp/C.holes.length)+(h.si<=(hcp%C.holes.length)?1:0);var netH=v-hcpS;tn+=netH;var nd=netH-h.par;html+='<td class="'+vpc(nd)+'">'+vpt(nd)+'</td>';}else html+='<td>—</td>';});
         html+='<td class="tot '+vpc(tn-hs.reduce(function(a,h){return a+h.par;},0))+'">'+(tn>0?vpt(tn-hs.reduce(function(a,h){return a+h.par;},0)):'—')+'</td></tr>';
       }
       // Stableford view
-      if(showHStab){
-        var ts=0;html+='<tr><td class="lbl" style="color:'+col+'">'+p.name.split(' ')[0]+' Stab</td>';
+      if(true){
+        var ts=0;html+='<tr data-hsv="stab"><td class="lbl" style="color:'+col+'">'+p.name.split(' ')[0]+' Stab</td>';
         hs.forEach(function(h){var ai=C.holes.findIndex(function(x){return x.n===h.n;});var v=(p.shots&&p.shots[ai])||0;if(v>0){var sp=stabPts(v,h.par,h.si,p.handicap||18,r.course||'');ts+=sp;html+='<td class="'+(sp>=3?'sg':sp>=2?'snorm':'sbad')+'">'+sp+'</td>';}else html+='<td class="snorm">—</td>';});
         html+='<td class="tot">'+(ts||'—')+'</td></tr>';
       }
@@ -1771,6 +1778,8 @@ function viewRound(id){
     html+='</table></div></div>';
   });
   $('mbody').innerHTML=html;$('mbg').classList.add('open');
+  // Apply current toggle state
+  setTimeout(function(){setHSV(histScoreView);},50);
 }
 function closeMod(){$('mbg').classList.remove('open');}
 
