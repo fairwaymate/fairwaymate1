@@ -201,6 +201,9 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
 .hole-cell input{width:100%;text-align:center;border:.5px solid var(--bdm);border-radius:4px;padding:4px;font-size:14px;font-weight:700;background:var(--card);color:var(--t);font-family:'DM Sans',sans-serif}
 .draft-indicator{font-size:11px;color:var(--gt);background:var(--gl);border-radius:20px;padding:2px 8px;margin-left:8px;font-weight:500;display:none}
 
+.grp-list-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:.5px solid var(--bdr);border-radius:var(--rs);margin-bottom:6px;cursor:pointer;background:var(--card);transition:all .15s}
+.grp-list-item:hover{background:var(--gl);border-color:var(--g)}
+.grp-list-item.active{background:var(--gl);border:.5px solid var(--g);border-left:3px solid var(--g)}
 .step-card{transition:opacity .2s,filter .2s}
 .step-card.step-locked{opacity:.45;pointer-events:none;filter:grayscale(30%)}
 .step-card.step-done{border-left:3px solid var(--g)}
@@ -354,29 +357,21 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
 
       <!-- STEP 2A: Mates group (mates mode only) -->
       <div id="grp-section" class="card step-card" style="display:none">
-        <!-- Header row with inline action buttons -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px">
-          <div class="ctitle" style="margin-bottom:0"><span class="step-num pending" id="snum-2">2</span>Which mates group?</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <button class="bsm" style="font-size:11px;padding:5px 10px" onclick="switchToGroups()">Switch</button>
-            <button class="bsm bsm-green" style="font-size:11px;padding:5px 10px" onclick="showCreateGrp()">+ New group</button>
-            <button class="bsm" style="font-size:11px;padding:5px 10px" onclick="showCodeModal()">Join with code</button>
-          </div>
+        <div class="ctitle"><span class="step-num pending" id="snum-2">2</span>Which mates group?</div>
+
+        <!-- Group list + actions -->
+        <div id="grp-list-wrap"></div>
+
+        <!-- Action buttons -->
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="abtn abtn-g" style="flex:1;padding:10px 8px;font-size:13px" onclick="showCreateGrp()">+ New group</button>
+          <button class="abtn abtn-w" style="flex:1;padding:10px 8px;font-size:13px" onclick="showCodeModal()">Join with code</button>
         </div>
-        <div id="grp-yes">
-          <div id="grp-switcher" style="margin-bottom:10px"></div>
+
+        <!-- Players -->
+        <div id="grp-players-wrap" style="display:none;margin-top:14px;padding-top:14px;border-top:.5px solid var(--bdr)">
           <div class="slbl" id="player-sel-lbl" style="margin-bottom:8px">Who is playing? <span style="color:var(--t3);font-size:11px">(select up to 5)</span></div>
           <div class="player-pills" id="player-pills"></div>
-        </div>
-        <div id="grp-no" style="display:none">
-          <div class="nogrp" style="margin-bottom:0">
-            <div style="font-size:28px;margin-bottom:8px">👥</div>
-            <p>Create a mates group to record rounds together.</p>
-            <div class="brow" style="justify-content:center;margin-top:10px">
-              <button class="bsm bsm-green" onclick="showCreateGrp()">Create a mates group</button>
-              <button class="bsm" onclick="showCodeModal()">I have an invite code</button>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -701,55 +696,52 @@ function updateBadge(){
 }
 
 function updateGroupUI(){
-  if(cg){
-    $('grp-yes').style.display='';$('grp-no').style.display='none';
-    renderGroupSwitcher();
-  } else {
-    $('grp-yes').style.display='none';$('grp-no').style.display='';
-    var sw=$('grp-switcher');if(sw)sw.innerHTML='';
-  }
-  // Show grp-section only in mates mode
+  // Show/hide grp-section based on mode
   var grpSec=$('grp-section');
   if(grpSec)grpSec.style.display=rm==='mates'?'':'none';
   var soloSec=$('solo-section');
   if(soloSec)soloSec.style.display=rm==='solo'?'':'none';
+  if(rm==='mates')renderGroupList();
 }
 
-function renderGroupSwitcher(){
-  var wrap=$('grp-switcher');if(!wrap)return;
-  if(!cg){wrap.innerHTML='';return;}
-  var html='';
+function renderGroupList(){
+  var wrap=$('grp-list-wrap');if(!wrap)return;
+  var playWrap=$('grp-players-wrap');
 
-  // Active group — dark green confirmed box
-  var photo=cg.photoURL?'<img src="'+cg.photoURL+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':'<span style="font-size:18px">👥</span>';
-  html+='<div style="background:var(--gl);border:.5px solid var(--g);border-left:3px solid var(--g);border-radius:var(--r);padding:12px 14px;margin-bottom:8px">';
-  html+='<div style="display:flex;align-items:center;gap:10px">';
-  html+='<div style="width:36px;height:36px;border-radius:50%;background:var(--g);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">'+photo+'</div>';
-  html+='<div style="flex:1"><div style="font-size:15px;font-weight:700;color:var(--gt)">'+cg.name+'</div>';
-  html+='<div style="font-size:12px;color:var(--gt);opacity:.8">'+(cg.memberNames||[]).join(', ')+'</div></div>';
-  html+='<button class="grp-manage-btn" onclick="showInvite()">+ Invite</button>';
-  html+='</div></div>';
-
-  // Other groups to switch to
-  var others=allGroups.filter(function(g){return g.id!==cg.id;});
-  if(others.length){
-    html+='<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin:8px 0 6px">Switch group</div>';
-    others.forEach(function(g,i){
-      html+='<div class="sg-btn" data-gid="'+g.id+'" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:.5px solid var(--bdm);border-radius:var(--rs);margin-bottom:6px;cursor:pointer;background:var(--card)">';
-      html+='<span style="font-size:16px">👥</span>';
-      html+='<div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--t)">'+g.name+'</div>';
-      html+='<div style="font-size:11px;color:var(--t3)">'+(g.memberNames||[]).length+' members</div></div>';
-      html+='<span style="font-size:12px;color:var(--g);font-weight:600">Switch \u2192</span>';
-      html+='</div>';
-    });
+  if(!allGroups.length){
+    wrap.innerHTML='<div style="text-align:center;padding:16px 0;color:var(--t3);font-size:14px">No groups yet — create one below</div>';
+    if(playWrap)playWrap.style.display='none';
+    return;
   }
 
-  wrap.innerHTML=html;
-  // Attach click handlers via event delegation to avoid quote issues
-  wrap.querySelectorAll('.sg-btn').forEach(function(el){
-    el.addEventListener('click',function(){switchGrp(this.getAttribute('data-gid'));});
+  wrap.innerHTML=allGroups.map(function(g){
+    var isActive=cg&&g.id===cg.id;
+    var photo=g.photoURL?'<img src="'+g.photoURL+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':'<span style="font-size:16px">👥</span>';
+    var box='<div class="grp-list-item'+(isActive?' active':'')+'" data-gid="'+g.id+'">'
+      +'<div style="width:36px;height:36px;border-radius:50%;background:'+(isActive?'var(--g)':'var(--bg)')+';border:.5px solid '+(isActive?'var(--g)':'var(--bdr)')+';display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">'+photo+'</div>'
+      +'<div style="flex:1">'
+        +'<div style="font-size:14px;font-weight:'+(isActive?700:500)+';color:'+(isActive?'var(--gt)':'var(--t)')+'">'+g.name+'</div>'
+        +'<div style="font-size:12px;color:var(--t3);margin-top:1px">'+(g.memberNames||[]).length+' members</div>'
+      +'</div>'
+      +(isActive?'<span style="font-size:12px;font-weight:700;color:var(--g)">✓ Selected</span>':'<span style="font-size:12px;color:var(--t3)">Tap to select</span>')
+      +'</div>';
+    return box;
+  }).join('');
+
+  // Attach click handlers
+  wrap.querySelectorAll('.grp-list-item').forEach(function(el){
+    el.addEventListener('click',function(){
+      var gid=this.getAttribute('data-gid');
+      switchGroup(gid);
+    });
   });
+
+  // Show players if a group is selected
+  if(playWrap)playWrap.style.display=cg?'':'none';
 }
+
+function renderGroupSwitcher(){renderGroupList();}
+
 
 
 function doLogin(){
@@ -918,9 +910,8 @@ function switchGroup(gid){
   if(!g)return;
   cg=g;localStorage.setItem('fm-grp-'+cu.uid,gid);
   if(unsubRounds)unsubRounds();rounds=[];subRounds();
-  selectedPlayers=[];updateGroupUI();buildPlayerPills();buildCourseSelector();ac=null;buildSC();checkStepProgress();
+  selectedPlayers=[];renderGroupList();buildPlayerPills();buildCourseSelector();ac=null;buildSC();checkStepProgress();
   renderAccGroup();
-  toast('Switched to "'+g.name+'"');
 }
 
 function showEditGroup(gid){
