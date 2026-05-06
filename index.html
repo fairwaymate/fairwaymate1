@@ -706,6 +706,7 @@ function updateGroupUI(){
     renderGroupSwitcher();
   } else {
     $('grp-yes').style.display='none';$('grp-no').style.display='';
+    var sw=$('grp-switcher');if(sw)sw.innerHTML='';
   }
   // Show grp-section only in mates mode
   var grpSec=$('grp-section');
@@ -717,34 +718,39 @@ function updateGroupUI(){
 function renderGroupSwitcher(){
   var wrap=$('grp-switcher');if(!wrap)return;
   if(!cg){wrap.innerHTML='';return;}
-  // Active group box — dark green confirmed state
+  var html='';
+
+  // Active group — dark green confirmed box
   var photo=cg.photoURL?'<img src="'+cg.photoURL+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">':'<span style="font-size:18px">👥</span>';
-  var html='<div style="background:var(--gl);border:.5px solid var(--g);border-left:3px solid var(--g);border-radius:var(--r);padding:12px 14px;margin-bottom:8px">';
-  html+='<div style="display:flex;align-items:center;justify-content:space-between">';
+  html+='<div style="background:var(--gl);border:.5px solid var(--g);border-left:3px solid var(--g);border-radius:var(--r);padding:12px 14px;margin-bottom:8px">';
   html+='<div style="display:flex;align-items:center;gap:10px">';
-  html+='<div style="width:38px;height:38px;border-radius:50%;background:var(--g);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">'+photo+'</div>';
-  html+='<div>';
-  html+='<div style="font-size:15px;font-weight:700;color:var(--gt)">'+cg.name+'</div>';
-  html+='<div style="font-size:12px;color:var(--gt);margin-top:2px">'+(cg.memberNames||[]).join(', ')+'</div>';
-  html+='</div></div>';
-  html+='<div style="display:flex;gap:6px">';
-  html+='<button class="grp-manage-btn" onclick="cg&&showEditGroup(cg.id)">✏️</button>';
+  html+='<div style="width:36px;height:36px;border-radius:50%;background:var(--g);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">'+photo+'</div>';
+  html+='<div style="flex:1"><div style="font-size:15px;font-weight:700;color:var(--gt)">'+cg.name+'</div>';
+  html+='<div style="font-size:12px;color:var(--gt);opacity:.8">'+(cg.memberNames||[]).join(', ')+'</div></div>';
   html+='<button class="grp-manage-btn" onclick="showInvite()">+ Invite</button>';
   html+='</div></div>';
-  // Show other groups to switch to if more than one
-  if(allGroups.length>1){
-    html+='<div style="margin-top:10px;border-top:.5px solid var(--g);padding-top:10px">';
-    html+='<div style="font-size:11px;font-weight:600;color:var(--gt);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Switch group</div>';
-    allGroups.filter(function(g){return g.id!==cg.id;}).forEach(function(g){
-      html+='<button onclick="switchGrp(\''+g.id+'\')" style="width:100%;text-align:left;padding:8px 10px;border-radius:var(--rs);border:.5px solid var(--bdm);background:var(--bg);color:var(--t);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;margin-bottom:4px">\u{1F465} '+g.name+' <span style="float:right;font-size:11px;color:var(--t3)">'+((g.memberNames||[]).length)+' members</span></button>';
-      html+='<span style="font-size:14px">👥</span> '+g.name+' <span style="margin-left:auto;font-size:11px;color:var(--t3)">'+(g.memberNames||[]).length+' members</span>';
-      html+='</button>';
+
+  // Other groups to switch to
+  var others=allGroups.filter(function(g){return g.id!==cg.id;});
+  if(others.length){
+    html+='<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin:8px 0 6px">Switch group</div>';
+    others.forEach(function(g,i){
+      html+='<div class="sg-btn" data-gid="'+g.id+'" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:.5px solid var(--bdm);border-radius:var(--rs);margin-bottom:6px;cursor:pointer;background:var(--card)">';
+      html+='<span style="font-size:16px">👥</span>';
+      html+='<div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--t)">'+g.name+'</div>';
+      html+='<div style="font-size:11px;color:var(--t3)">'+(g.memberNames||[]).length+' members</div></div>';
+      html+='<span style="font-size:12px;color:var(--g);font-weight:600">Switch \u2192</span>';
+      html+='</div>';
     });
-    html+='</div>';
   }
-  html+='</div>';
+
   wrap.innerHTML=html;
+  // Attach click handlers via event delegation to avoid quote issues
+  wrap.querySelectorAll('.sg-btn').forEach(function(el){
+    el.addEventListener('click',function(){switchGrp(this.getAttribute('data-gid'));});
+  });
 }
+
 
 function doLogin(){
   var em=$('l-email').value.trim(),pw=$('l-pass').value;
