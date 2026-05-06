@@ -196,6 +196,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
 .hole-cell{background:var(--bg);border-radius:var(--rs);padding:8px;text-align:center}
 .hole-cell-label{font-size:10px;color:var(--t3);font-weight:600;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
 .hole-cell input{width:100%;text-align:center;border:.5px solid var(--bdm);border-radius:4px;padding:4px;font-size:14px;font-weight:700;background:var(--card);color:var(--t);font-family:'DM Sans',sans-serif}
+.draft-indicator{font-size:11px;color:var(--gt);background:var(--gl);border-radius:20px;padding:2px 8px;margin-left:8px;font-weight:500;display:none}
 .hole-header{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;margin-top:16px}
 .sv-toggle{display:flex;gap:6px;margin-bottom:12px}
 .sv-pill{flex:1;padding:7px 4px;border-radius:var(--rs);border:.5px solid var(--bdm);background:var(--bg);color:var(--t2);font-size:13px;font-weight:500;cursor:pointer;text-align:center;font-family:'DM Sans',sans-serif;transition:all .15s}
@@ -428,6 +429,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
       </div>
       <div id="sc-container"></div>
       <div class="card"><div class="ctitle">Round summary</div><div id="sum-content"></div></div>
+      <div style="display:flex;align-items:center;margin-bottom:4px"><span id="draft-indicator" class="draft-indicator">✓ Draft saved</span></div>
       <button class="btn btnp" onclick="saveRound()">Save Round ⛳</button>
       <button class="btn btns" onclick="clearSC()">Clear Scorecard</button>
     </div>
@@ -633,7 +635,7 @@ function showUpgrade(reason){
 
 // ── Auth ──────────────────────────────────────────────────
 auth.onAuthStateChanged(function(user){
-  if(user){cu=user;loadProfile(user);loadCustomCourses();}
+  if(user){cu=user;loadProfile(user);loadCustomCourses();setTimeout(loadDraft,1500);}
   else{cu=null;up=null;cg=null;allGroups=[];showPage('pg-auth');showSection('login');}
 });
 
@@ -1433,6 +1435,7 @@ function buildSC(){
 
 function recalc(){
   var C=ac?COURSES[ac]:null;if(!C)return;
+  scheduleDraftSave();
   var playing=getMembers().filter(function(m){return selectedPlayers.indexOf(m.uid)>=0;});
   var tots={};playing.forEach(function(m){tots[m.uid]={g:0,s:0};});
   var ht=C.halves.map(function(){var o={};playing.forEach(function(m){o[m.uid]={g:0,s:0};});return o;});
@@ -1532,6 +1535,104 @@ function recalc(){
   }
 }
 
+
+// ── Draft round auto-save ─────────────────────────────────
+var draftSaveTimer=null;
+
+function scheduleDraftSave(){
+  if(draftSaveTimer)clearTimeout(draftSaveTimer);
+  draftSaveTimer=setTimeout(saveDraft,2000); // save 2s after last input
+}
+
+function saveDraft(){
+  var u=auth.currentUser;if(!u||!ac||!cg)return;
+  var C=COURSES[ac];if(!C)return;
+  var playing=getMembers().filter(function(m){return selectedPlayers.indexOf(m.uid)>=0;});
+  if(!playing.length)return;
+
+  var shots={};
+  playing.forEach(function(m){
+    shots[m.uid]=[];
+    C.holes.forEach(function(hole){
+      var inp=$('sf-'+m.uid+'-'+hole.n);
+      shots[m.uid].push(inp?parseInt(inp.value)||0:0);
+    });
+  });
+
+  var draft={
+    uid:u.uid,
+    groupId:cg.id,
+    course:ac,
+    courseName:C.name,
+    courseHoles:C.holes,
+    courseHalves:C.halves,
+    mode:rm,
+    selectedPlayers:selectedPlayers,
+    date:($('r-date')&&$('r-date').value)||new Date().toISOString().slice(0,10),
+    shots:shots,
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  db.collection('draft_rounds').doc(u.uid).set(draft).then(function(){
+    var di=$('draft-indicator');
+    if(di){di.style.display='inline-block';di.textContent='✓ Draft saved';}
+  }).catch(function(e){console.error('Draft save error:',e);});
+}
+
+function loadDraft(){
+  var u=auth.currentUser;if(!u)return;
+  db.collection('draft_rounds').doc(u.uid).get().then(function(snap){
+    if(!snap.exists)return;
+    var d=snap.data();
+    if(!d||!d.course||!d.shots)return;
+    // Restore draft
+    if(confirm('You have an unfinished round at '+d.courseName+'. Continue where you left off?')){
+      restoreDraft(d);
+    } else {
+      // Clear the draft
+      db.collection('draft_rounds').doc(u.uid).delete();
+    }
+  }).catch(function(e){console.error('Draft load error:',e);});
+}
+
+function restoreDraft(d){
+  // Restore course
+  if(d.courseHoles&&d.courseName){
+    COURSES[d.course]={name:d.courseName,holes:d.courseHoles,halves:d.courseHalves||[{l:'All Holes',t:'Total',s:0,e:d.courseHoles.length}]};
+    ac=d.course;
+    var lb=$('srch-lbl');
+    if(lb){lb.textContent='✓ '+d.courseName+' · '+d.courseHoles.length+' holes';lb.style.display='block';}
+  }
+  // Restore mode
+  if(d.mode){rm=d.mode;document.querySelectorAll('.mpill').forEach(function(p){p.classList.remove('active');});var mp=$(d.mode==='solo'?'pill-solo':'pill-mates');if(mp)mp.classList.add('active');}
+  // Restore players
+  if(d.selectedPlayers)selectedPlayers=d.selectedPlayers;
+  // Restore date
+  if(d.date&&$('r-date'))$('r-date').value=d.date;
+  // Rebuild scorecard then restore scores
+  buildSC();
+  setTimeout(function(){
+    if(d.shots){
+      var C=COURSES[d.course];if(!C)return;
+      Object.keys(d.shots).forEach(function(uid){
+        C.holes.forEach(function(hole,idx){
+          var inp=$('sf-'+uid+'-'+hole.n);
+          if(inp&&d.shots[uid][idx])inp.value=d.shots[uid][idx];
+        });
+      });
+      recalc();
+      var di=$('draft-indicator');
+      if(di){di.style.display='inline-block';di.textContent='✓ Draft restored';}
+    }
+  },200);
+}
+
+function clearDraft(){
+  var u=auth.currentUser;if(!u)return;
+  db.collection('draft_rounds').doc(u.uid).delete().catch(function(){});
+  var di=$('draft-indicator');if(di)di.style.display='none';
+}
+
 // ── Save round ────────────────────────────────────────────
 function saveRound(){
   var date=$('r-date').value;if(!date){toast('Please select a date','err');return;}
@@ -1559,10 +1660,12 @@ function saveRound(){
   }
   db.collection('groups').doc(cg.id).collection('rounds').add({course:ac,courseName:C.name,courseHoles:C.holes,courseHalves:C.halves,mode:rm,soloPlayerId:rm==='solo'?(selectedPlayers[0]||null):null,playerIds:playing.map(function(m){return m.uid;}),date:date,playerData:pd,holeWins:hw,createdBy:cu.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()}).then(function(){
     if(!COURSES[ac])COURSES[ac]=C;
+    clearDraft();
     toast('Round saved! ⛳');clearSC();buildCourseSelector();buildCourseFilters();
   }).catch(function(e){toast('Failed to save round','err');console.error(e);});
 }
-function clearSC(){buildSC();}
+function clearSC(){
+  clearDraft();buildSC();}
 
 // ── Tabs & filters ────────────────────────────────────────
 function switchTab(t){
