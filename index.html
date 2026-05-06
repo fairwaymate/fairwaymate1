@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,interactive-widget=resizes-content">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="FairwayMate">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -84,7 +84,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .tabs{display:flex;border-bottom:.5px solid var(--bdr);background:var(--card);flex-shrink:0}
 .tab{flex:1;padding:10px 4px;font-size:12px;font-weight:500;border:none;background:none;color:var(--t2);border-bottom:2px solid transparent;cursor:pointer}
 .tab.active{color:var(--g);border-bottom-color:var(--g);font-weight:700;font-size:13px}
-.main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .panel{display:none;padding:16px;padding-bottom:max(24px,env(safe-area-inset-bottom))}
 .panel.active{display:block}
 .card{background:var(--card);border-radius:var(--r);border:.5px solid var(--bdr);border-left:3px solid var(--g);padding:14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
@@ -110,7 +110,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
 #pill-search.active{background:var(--gold);border-color:var(--gold-t);color:#fff;font-weight:700}
 .cbdg{display:block;font-size:10px;margin-top:2px;opacity:.7}
 .slbl{font-size:12px;color:var(--t2);font-weight:500}
-.sc-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -14px;padding:0 14px}
+.sc-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -14px;padding:0 14px;scroll-snap-type:x mandatory}
 table.sc,table.scr{border-collapse:collapse;font-size:12px}
 table.sc th,table.sc td,table.scr th,table.scr td{text-align:center;padding:5px 4px;border:.5px solid var(--bdr);white-space:nowrap;min-width:28px}
 table.sc th,table.scr th{background:var(--bg);color:var(--t2);font-weight:500;font-size:11px}
@@ -1361,8 +1361,10 @@ function setSV(v){
   if(up){up.scoreView=v;db.collection('users').doc(cu.uid).update({scoreView:v}).catch(function(){});}
   // Show/hide rows by data-sv attribute WITHOUT rebuilding scorecard
   document.querySelectorAll('[data-sv]').forEach(function(row){
-    row.style.display=row.getAttribute('data-sv')===v?'':'none';
+    row.style.display=row.getAttribute('data-sv')===v?'table-row':'none';
   });
+  // Recalc to populate totals and leaders for the newly shown rows
+  recalc();
 }
 
 function buildSC(){
@@ -1440,15 +1442,15 @@ function buildSC(){
     if(showStab){
       playing.forEach(function(m){
         var col=mColor(m.uid);
-        html+='<tr data-sv="stab"><td class="lbl" style="color:'+col+'">'+m.name.split(' ')[0]+' Stab</td>';
+        html+='<tr data-sv="stab" style="display:table-row"><td class="lbl" style="color:'+col+'">'+m.name.split(' ')[0]+' Stab</td>';
         hs.forEach(function(h){html+='<td id="st-'+m.uid+'-'+h.n+'" class="snorm">—</td>';});
         html+='<td class="tot" id="ts-'+m.uid+'-'+hi+'">—</td></tr>';
       });
       if(rm==='mates'&&playing.length>=2){
-        html+='<tr data-sv="stab"><td class="lbl">Hole winner</td>';
+        html+='<tr data-sv="stab" style="display:table-row"><td class="lbl">Hole winner</td>';
         hs.forEach(function(h){html+='<td id="hl-'+h.n+'" class="wh">—</td>';});
         html+='<td id="hltot-'+hi+'" class="tot" style="font-size:10px"></td></tr>';
-        html+='<tr data-sv="stab"><td class="lbl">Game leader</td>';
+        html+='<tr data-sv="stab" style="display:table-row"><td class="lbl">Game leader</td>';
         hs.forEach(function(h){html+='<td id="sgl-'+h.n+'" class="wh"></td>';});
         html+='<td id="sgltot-'+hi+'" class="tot" style="font-size:11px;font-weight:700"></td></tr>';
       }
@@ -1662,14 +1664,25 @@ function loadDraft(){
     if(!snap.exists)return;
     var d=snap.data();
     if(!d||!d.course||!d.shots)return;
-    // Restore draft
-    if(confirm('You have an unfinished round at '+d.courseName+'. Continue where you left off?')){
-      restoreDraft(d);
-    } else {
-      // Clear the draft
-      db.collection('draft_rounds').doc(u.uid).delete();
-    }
+    showDraftModal(d);
   }).catch(function(e){console.error('Draft load error:',e);});
+}
+
+function showDraftModal(d){
+  var existing=$('draft-modal');if(existing)existing.remove();
+  var date=d.date?d.date.split('-').reverse().join('/'):'';
+  var modal=document.createElement('div');
+  modal.id='draft-modal';
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML='<div style="background:var(--card);border-radius:var(--r);padding:28px 24px;width:100%;max-width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)">'
+    +'<div style="width:52px;height:52px;background:var(--gl);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px">⛳</div>'
+    +'<div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--gt);margin-bottom:8px">Unfinished round</div>'
+    +'<div style="font-size:14px;color:var(--t2);margin-bottom:4px">'+d.courseName+'</div>'
+    +'<div style="font-size:13px;color:var(--t3);margin-bottom:24px">'+date+(d.mode==='solo'?' · Solo':' · Mates round')+'</div>'
+    +'<button onclick="document.getElementById('draft-modal').remove();restoreDraft('+JSON.stringify(d).replace(/\/g,'\\')+');" style="width:100%;padding:13px;background:var(--g);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px">Continue round →</button>'
+    +'<button onclick="document.getElementById('draft-modal').remove();db.collection('draft_rounds').doc(auth.currentUser.uid).delete();" style="width:100%;padding:13px;background:var(--bg);color:var(--t2);border:.5px solid var(--bdm);border-radius:var(--rs);font-size:15px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">Start fresh</button>'
+    +'</div>';
+  document.body.appendChild(modal);
 }
 
 function restoreDraft(d){
