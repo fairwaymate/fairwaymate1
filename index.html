@@ -706,7 +706,6 @@ function updateGroupUI(){
 
 function renderGroupList(){
   var wrap=$('grp-list-wrap');if(!wrap)return;
-  console.log('renderGroupList called, allGroups:', allGroups.length, 'cg:', cg&&cg.name);
   var playWrap=$('grp-players-wrap');
 
   if(!allGroups.length){
@@ -1138,8 +1137,10 @@ function setMode(m){
 }
 
 function buildPlayerPills(){
+  var wrap=$('player-pills');
   var ms=getMembers();
   var lbl=$('player-sel-lbl');
+  if(!wrap)return;
   if(!ms.length){wrap.innerHTML='<p style="font-size:13px;color:var(--t2)">Create or join a group to select players.</p>';return;}
   if(rm==='solo'){
     if(lbl)lbl.textContent='Who is playing the solo round?';
