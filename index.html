@@ -156,8 +156,9 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
 .srchi:focus{border-color:var(--g)}
 .srchbtn{padding:10px 16px;border-radius:var(--rs);border:none;background:var(--g);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
 #srch-res{margin-top:8px;max-height:220px;overflow-y:auto;border-radius:var(--rs);border:.5px solid var(--bdr)}
-.sri{padding:10px 14px;border-bottom:.5px solid var(--bdr);cursor:pointer;background:var(--card)}.sri:last-child{border-bottom:none}.sri:active{background:var(--gl)}
-.srn{font-size:14px;font-weight:500}.srs{font-size:11px;color:var(--t2);margin-top:2px}
+.sri{padding:12px 14px;border-bottom:.5px solid var(--bdr);cursor:pointer;background:var(--card);border-left:3px solid transparent;transition:all .15s}.sri:last-child{border-bottom:none}.sri:hover,.sri:active{background:var(--gl);border-left-color:var(--g)}
+.srn{font-size:15px;font-weight:600;color:var(--t)}.srs{font-size:12px;color:var(--t2);margin-top:3px}
+.srch-res-wrap{border:1px solid var(--bdr);border-radius:var(--rs);overflow:hidden;margin-top:8px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
 .srst{padding:14px;text-align:center;font-size:13px;color:var(--t2);background:var(--card);border-radius:var(--rs)}
 .lbanner{background:#FFF8E7;border:.5px solid #E6A817;border-radius:var(--rs);padding:10px 14px;margin-top:8px;font-size:13px;color:var(--gold-t);display:none}
 .csec{margin-bottom:20px}.cttl{font-size:14px;font-weight:600;margin-bottom:8px}
@@ -404,7 +405,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
             <input type="text" class="srchi" id="srchi" placeholder="e.g. Augusta, St Andrews…" onkeydown="if(event.key==='Enter')doSearch()">
             <button class="srchbtn" onclick="doSearch()">Search</button>
           </div>
-          <div id="srch-res"></div>
+          <div class="srch-res-wrap" id="srch-res-wrap" style="display:none"><div id="srch-res"></div></div>
           <div style="text-align:center;padding:8px 0 2px"><button onclick="openAddCourse()" style="background:none;border:none;color:var(--gt);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline">+ Add course manually</button></div>
           <div id="srch-lbl" class="lbanner"></div>
         </div>
@@ -1301,6 +1302,7 @@ function doSearch(){
     var globalNames=globalCourses.map(function(c){return(c.club_name||'').toLowerCase().trim();});
     var uniqueUK=ukCourses.filter(function(c){return globalNames.indexOf((c.club_name||'').toLowerCase().trim())<0;});
     var cs=customResults.concat(globalCourses).concat(uniqueUK).slice(0,15);
+    var rw=$('srch-res-wrap');if(rw)rw.style.display='block';
     if(!cs.length){r.innerHTML='<div class="srst">No courses found. Try a different spelling or postcode.</div>';return;}
     incSearch();
     window._sr=cs;
@@ -1403,14 +1405,20 @@ function buildSC(){
       if(rm==='mates'){
         playing.forEach(function(m){
           var col=mColor(m.uid);
-          html+='<tr><td class="lbl" style="color:'+col+'">'+m.name.split(' ')[0]+' vs Par</td>';
+          html+='<tr data-sv="gross" style="display:none"><td class="lbl" style="color:'+col+'">'+m.name.split(' ')[0]+' vs Par</td>';
           hs.forEach(function(h){html+='<td id="gvp-'+m.uid+'-'+h.n+'" class="vp">—</td>';});
           html+='<td class="tot" id="gvptot-'+m.uid+'-'+hi+'">—</td></tr>';
         });
+        html+='<tr data-sv="gross" style="display:none"><td class="lbl">Hole winner</td>';
+        hs.forEach(function(h){html+='<td id="ghl-'+h.n+'" class="wh">—</td>';});
+        html+='<td id="ghltot-'+hi+'" class="tot" style="font-size:10px"></td></tr>';
+        html+='<tr data-sv="gross" style="display:none"><td class="lbl">Game leader</td>';
+        hs.forEach(function(h){html+='<td id="ggl-'+h.n+'" class="wh"></td>';});
+        html+='<td id="ggltot-'+hi+'" class="tot" style="font-size:11px;font-weight:700"></td></tr>';
       }
     }
 
-    // Net: net score rows
+    // Net: net score rows + hole winner + game leader
     if(showNet){
       playing.forEach(function(m){
         var col=mColor(m.uid);
@@ -1418,9 +1426,17 @@ function buildSC(){
         hs.forEach(function(h){html+='<td id="nt-'+m.uid+'-'+h.n+'" class="vp">—</td>';});
         html+='<td class="tot" id="tn-'+m.uid+'-'+hi+'">—</td></tr>';
       });
+      if(rm==='mates'&&playing.length>=2){
+        html+='<tr data-sv="net" style="display:none"><td class="lbl">Hole winner</td>';
+        hs.forEach(function(h){html+='<td id="nhl-'+h.n+'" class="wh">—</td>';});
+        html+='<td id="nhltot-'+hi+'" class="tot" style="font-size:10px"></td></tr>';
+        html+='<tr data-sv="net" style="display:none"><td class="lbl">Game leader</td>';
+        hs.forEach(function(h){html+='<td id="ngl-'+h.n+'" class="wh"></td>';});
+        html+='<td id="ngltot-'+hi+'" class="tot" style="font-size:11px;font-weight:700"></td></tr>';
+      }
     }
 
-    // Stableford: stab rows + leader
+    // Stableford: stab rows + hole leader + game leader
     if(showStab){
       playing.forEach(function(m){
         var col=mColor(m.uid);
@@ -1429,9 +1445,12 @@ function buildSC(){
         html+='<td class="tot" id="ts-'+m.uid+'-'+hi+'">—</td></tr>';
       });
       if(rm==='mates'&&playing.length>=2){
-        html+='<tr data-sv="stab"><td class="lbl">Stab leader</td>';
+        html+='<tr data-sv="stab"><td class="lbl">Hole winner</td>';
         hs.forEach(function(h){html+='<td id="hl-'+h.n+'" class="wh">—</td>';});
         html+='<td id="hltot-'+hi+'" class="tot" style="font-size:10px"></td></tr>';
+        html+='<tr data-sv="stab"><td class="lbl">Game leader</td>';
+        hs.forEach(function(h){html+='<td id="sgl-'+h.n+'" class="wh"></td>';});
+        html+='<td id="sgltot-'+hi+'" class="tot" style="font-size:11px;font-weight:700"></td></tr>';
       }
     }
 
@@ -1482,14 +1501,34 @@ function recalc(){
       });
     }
     if(rm==='mates'&&playing.length>=2){
+      var valid=playing.filter(function(m){return shots[m.uid]>0;});
+      // Stableford hole winner
       var hl=$('hl-'+hole.n);if(hl){
-        var valid=playing.filter(function(m){return shots[m.uid]>0;});
         if(valid.length>=2){
           var mx=Math.max.apply(null,valid.map(function(m){return stabs[m.uid];}));
           var winners=valid.filter(function(m){return stabs[m.uid]===mx;});
           if(winners.length===1){hl.textContent=winners[0].name.split(' ')[0];hl.style.color=mColor(winners[0].uid);hl.className='wf';}
           else{hl.textContent='H';hl.className='wh';}
         } else{hl.textContent='—';hl.className='wh';}
+      }
+      // Gross hole winner (lowest score)
+      var ghl=$('ghl-'+hole.n);if(ghl){
+        if(valid.length>=2){
+          var mn=Math.min.apply(null,valid.map(function(m){return shots[m.uid];}));
+          var gws=valid.filter(function(m){return shots[m.uid]===mn;});
+          if(gws.length===1){ghl.textContent=gws[0].name.split(' ')[0];ghl.style.color=mColor(gws[0].uid);ghl.className='wf';}
+          else{ghl.textContent='H';ghl.className='wh';}
+        } else{ghl.textContent='—';ghl.className='wh';}
+      }
+      // Net hole winner (lowest net score)
+      var nhl=$('nhl-'+hole.n);if(nhl){
+        if(valid.length>=2){
+          var netScores=valid.map(function(m){var hcpS=Math.floor(hcap(m.uid)/C.holes.length)+(hole.si<=(hcap(m.uid)%C.holes.length)?1:0);return{m:m,net:shots[m.uid]-hcpS};});
+          var mnNet=Math.min.apply(null,netScores.map(function(x){return x.net;}));
+          var nws=netScores.filter(function(x){return x.net===mnNet;});
+          if(nws.length===1){nhl.textContent=nws[0].m.name.split(' ')[0];nhl.style.color=mColor(nws[0].m.uid);nhl.className='wf';}
+          else{nhl.textContent='H';nhl.className='wh';}
+        } else{nhl.textContent='—';nhl.className='wh';}
       }
     }
   });
@@ -1524,6 +1563,37 @@ function recalc(){
         ht2.textContent=lv>0?leader.name.split(' ')[0]+' +'+lv:'—';
         ht2.style.color=lv>0?mColor(leader.uid):'';
       }
+
+      // Running game leader — updated hole by hole for all views
+      // Stableford running leader
+      var runStab={};playing.forEach(function(m){runStab[m.uid]=0;});
+      C.holes.slice(half.s,half.e).forEach(function(hole){
+        playing.forEach(function(m){var inp=$('sf-'+m.uid+'-'+hole.n);var v=inp?parseInt(inp.value)||0:0;if(v>0)runStab[m.uid]+=stabPts(v,hole.par,hole.si,hcap(m.uid),ac);});
+        var sgl=$('sgl-'+hole.n);if(sgl){
+          var valid2=playing.filter(function(m){return runStab[m.uid]>0;});
+          if(valid2.length>=2){var mx2=Math.max.apply(null,valid2.map(function(m){return runStab[m.uid];}));var ws2=valid2.filter(function(m){return runStab[m.uid]===mx2;});if(ws2.length===1){sgl.textContent=ws2[0].name.split(' ')[0];sgl.style.color=mColor(ws2[0].uid);}else{sgl.textContent='Tied';sgl.style.color='';}}else{sgl.textContent='';}}
+      });
+      var sgltot=$('sgltot-'+hi);if(sgltot){var sl=playing.reduce(function(a,b){return runStab[a.uid]>=runStab[b.uid]?a:b;});var sv=runStab[sl.uid];var tied2=playing.filter(function(m){return runStab[m.uid]===sv&&sv>0;});sgltot.textContent=tied2.length>1?'All square':sv>0?sl.name.split(' ')[0]+' leads':'—';sgltot.style.color=tied2.length>1?'':sv>0?mColor(sl.uid):'';}
+
+      // Gross running leader
+      var runGross={};playing.forEach(function(m){runGross[m.uid]=0;});var holesPlayedG={};playing.forEach(function(m){holesPlayedG[m.uid]=0;});
+      C.holes.slice(half.s,half.e).forEach(function(hole){
+        playing.forEach(function(m){var inp=$('sf-'+m.uid+'-'+hole.n);var v=inp?parseInt(inp.value)||0:0;if(v>0){runGross[m.uid]+=(v-hole.par);holesPlayedG[m.uid]++;}});
+        var ggl=$('ggl-'+hole.n);if(ggl){
+          var valid3=playing.filter(function(m){return holesPlayedG[m.uid]>0;});
+          if(valid3.length>=2){var mn3=Math.min.apply(null,valid3.map(function(m){return runGross[m.uid];}));var ws3=valid3.filter(function(m){return runGross[m.uid]===mn3;});if(ws3.length===1){ggl.textContent=ws3[0].name.split(' ')[0];ggl.style.color=mColor(ws3[0].uid);}else{ggl.textContent='Tied';ggl.style.color='';}}else{ggl.textContent='';}}
+      });
+      var ggltot=$('ggltot-'+hi);if(ggltot){var valid4=playing.filter(function(m){return holesPlayedG[m.uid]>0;});if(valid4.length>=2){var mn4=Math.min.apply(null,valid4.map(function(m){return runGross[m.uid];}));var gl4=valid4.filter(function(m){return runGross[m.uid]===mn4;});ggltot.textContent=gl4.length>1?'All square':gl4[0].name.split(' ')[0]+' leads ('+vpt(mn4)+')';ggltot.style.color=gl4.length>1?'':mColor(gl4[0].uid);}else{ggltot.textContent='—';}}
+
+      // Net running leader
+      var runNet={};playing.forEach(function(m){runNet[m.uid]=0;});var holesPlayedN={};playing.forEach(function(m){holesPlayedN[m.uid]=0;});
+      C.holes.slice(half.s,half.e).forEach(function(hole){
+        playing.forEach(function(m){var inp=$('sf-'+m.uid+'-'+hole.n);var v=inp?parseInt(inp.value)||0:0;if(v>0){var hcpS=Math.floor(hcap(m.uid)/C.holes.length)+(hole.si<=(hcap(m.uid)%C.holes.length)?1:0);runNet[m.uid]+=((v-hcpS)-hole.par);holesPlayedN[m.uid]++;}});
+        var ngl=$('ngl-'+hole.n);if(ngl){
+          var valid5=playing.filter(function(m){return holesPlayedN[m.uid]>0;});
+          if(valid5.length>=2){var mn5=Math.min.apply(null,valid5.map(function(m){return runNet[m.uid];}));var ws5=valid5.filter(function(m){return runNet[m.uid]===mn5;});if(ws5.length===1){ngl.textContent=ws5[0].name.split(' ')[0];ngl.style.color=mColor(ws5[0].uid);}else{ngl.textContent='Tied';ngl.style.color='';}}else{ngl.textContent='';}}
+      });
+      var ngltot=$('ngltot-'+hi);if(ngltot){var valid6=playing.filter(function(m){return holesPlayedN[m.uid]>0;});if(valid6.length>=2){var mn6=Math.min.apply(null,valid6.map(function(m){return runNet[m.uid];}));var gl6=valid6.filter(function(m){return runNet[m.uid]===mn6;});ngltot.textContent=gl6.length>1?'All square':gl6[0].name.split(' ')[0]+' leads ('+vpt(mn6)+')';ngltot.style.color=gl6.length>1?'':mColor(gl6[0].uid);}else{ngltot.textContent='—';}}
     }
   });
 
