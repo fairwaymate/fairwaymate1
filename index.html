@@ -1700,20 +1700,29 @@ function loadDraft(){
   }).catch(function(e){console.error('Draft load error:',e);});
 }
 
+function closeDraftModal(restore){
+  var m=document.getElementById('draft-modal');if(m)m.remove();
+  if(restore&&window._pendingDraft){restoreDraft(window._pendingDraft);}
+  else if(!restore){db.collection('draft_rounds').doc(auth.currentUser.uid).delete();window._pendingDraft=null;}
+}
+
 function showDraftModal(d){
   var existing=$('draft-modal');if(existing)existing.remove();
   var date=d.date?d.date.split('-').reverse().join('/'):'';
   var modal=document.createElement('div');
   modal.id='draft-modal';
   modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px';
-  modal.innerHTML='<div style="background:var(--card);border-radius:var(--r);padding:28px 24px;width:100%;max-width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)">'
-    +'<div style="width:52px;height:52px;background:var(--gl);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px">⛳</div>'
-    +'<div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--gt);margin-bottom:8px">Unfinished round</div>'
-    +'<div style="font-size:14px;color:var(--t2);margin-bottom:4px">'+d.courseName+'</div>'
-    +'<div style="font-size:13px;color:var(--t3);margin-bottom:24px">'+date+(d.mode==='solo'?' · Solo':' · Mates round')+'</div>'
-    +'<button onclick="document.getElementById('draft-modal').remove();restoreDraft('+JSON.stringify(d).replace(/\/g,'\\')+');" style="width:100%;padding:13px;background:var(--g);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px">Continue round →</button>'
-    +'<button onclick="document.getElementById('draft-modal').remove();db.collection('draft_rounds').doc(auth.currentUser.uid).delete();" style="width:100%;padding:13px;background:var(--bg);color:var(--t2);border:.5px solid var(--bdm);border-radius:var(--rs);font-size:15px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">Start fresh</button>'
-    +'</div>';
+  // Store draft data for buttons to reference
+  window._pendingDraft=d;
+  var html='<div style="background:var(--card);border-radius:var(--r);padding:28px 24px;width:100%;max-width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)">';
+  html+='<div style="width:52px;height:52px;background:var(--gl);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px">⛳</div>';
+  html+='<div style="font-size:20px;font-weight:700;color:var(--gt);margin-bottom:8px">Unfinished round</div>';
+  html+='<div style="font-size:14px;color:var(--t2);margin-bottom:4px">'+d.courseName+'</div>';
+  html+='<div style="font-size:13px;color:var(--t3);margin-bottom:24px">'+date+(d.mode==='solo'?' · Solo':' · Mates round')+'</div>';
+  html+='<button onclick="closeDraftModal(true)" style="width:100%;padding:13px;background:var(--g);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px">Continue round →</button>';
+  html+='<button onclick="closeDraftModal(false)" style="width:100%;padding:13px;background:var(--bg);color:var(--t2);border:.5px solid var(--bdm);border-radius:var(--rs);font-size:15px;font-weight:500;cursor:pointer">Start fresh</button>';
+  html+='</div>';
+  modal.innerHTML=html;
   document.body.appendChild(modal);
 }
 
