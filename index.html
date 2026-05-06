@@ -60,6 +60,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .field label{display:block;font-size:13px;color:var(--t2);margin-bottom:5px;font-weight:500}
 .field input{width:100%;padding:11px 14px;border:.5px solid var(--bdm);border-radius:var(--rs);background:var(--bg);color:var(--t);font-size:15px;outline:none;font-family:'DM Sans',sans-serif}
 .field input:focus{border-color:var(--g)}
+.field input.confirmed{border-color:var(--g);background:var(--gl);color:var(--gt);font-weight:600}
 .abtn{display:flex;width:100%;padding:13px;border-radius:var(--rs);border:none;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px;font-family:'DM Sans',sans-serif;align-items:center;justify-content:center;gap:8px}
 .abtn-g{background:var(--g);color:#fff}
 .abtn-w{background:var(--card);color:var(--t);border:.5px solid var(--bdm)}
@@ -89,7 +90,7 @@ body{display:flex;flex-direction:column;overflow:hidden}
 .panel.active{display:block}
 .card{background:var(--card);border-radius:var(--r);border:.5px solid var(--bdr);border-left:3px solid var(--g);padding:14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 .ctitle{font-size:13px;font-weight:700;color:var(--gt);margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em}
-.grp-box{background:var(--card);border:.5px solid var(--bdr);border-left:3px solid var(--gold);border-radius:var(--r);padding:14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.grp-box{background:var(--gl);border:.5px solid var(--g);border-left:3px solid var(--g);border-radius:var(--r);padding:14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 .grp-top{display:flex;justify-content:space-between;align-items:flex-start}
 .grp-name{font-size:15px;font-weight:700;color:var(--gt)}
 .grp-mem{font-size:12px;color:var(--gt);margin-top:3px;line-height:1.5}
@@ -160,7 +161,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
 .srn{font-size:15px;font-weight:600;color:var(--t)}.srs{font-size:12px;color:var(--t2);margin-top:3px}
 .srch-res-wrap{border:1px solid var(--bdr);border-radius:var(--rs);overflow:hidden;margin-top:8px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
 .srst{padding:14px;text-align:center;font-size:13px;color:var(--t2);background:var(--card);border-radius:var(--rs)}
-.lbanner{background:#FFF8E7;border:.5px solid #E6A817;border-radius:var(--rs);padding:10px 14px;margin-top:8px;font-size:13px;color:var(--gold-t);display:none}
+.lbanner{background:var(--gl);border:.5px solid var(--g);border-radius:var(--rs);padding:10px 14px;margin-top:8px;font-size:13px;color:var(--gt);font-weight:600;display:none}
 .csec{margin-bottom:20px}.cttl{font-size:14px;font-weight:600;margin-bottom:8px}
 .cwrap{position:relative;width:100%;height:220px}
 .leg{display:flex;gap:12px;margin-bottom:8px;font-size:12px;color:var(--t2);flex-wrap:wrap}
@@ -417,7 +418,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
         <div style="background:var(--gl);border-radius:var(--rs);padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--gt);line-height:1.6">
           📱 <strong>Score hole by hole on the course</strong>, or enter from your paper scorecard in the clubhouse afterwards. One device scores for the whole group.
         </div>
-        <div class="field"><label>Date</label><input type="date" id="r-date"></div>
+        <div class="field"><label>Date</label><input type="date" id="r-date" onchange="this.classList.add('confirmed')"></div>
         <div style="font-size:12px;font-weight:600;color:var(--t2);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.05em">Players &amp; handicaps</div>
         <div id="hcap-fields"></div>
       </div>
@@ -684,7 +685,7 @@ function showApp(){
   showPage('pg-app');
   updateAvatarUI();
   updateBadge();
-  $('r-date').valueAsDate=new Date();
+  $('r-date').valueAsDate=new Date();var rd=$('r-date');if(rd)rd.classList.add('confirmed');
   var gs=$('grp-section');if(gs)gs.style.display='';
   // Default mode is mates so solo section hidden — but pre-populate it
   setMode('mates');
@@ -1490,7 +1491,12 @@ function buildSC(){
 
     html+='</table></div></div>';
   });
-  ct.innerHTML=html;recalc();
+  ct.innerHTML=html;
+  // Apply current score view immediately so correct rows are visible
+  document.querySelectorAll('[data-sv]').forEach(function(row){
+    row.style.display=row.getAttribute('data-sv')===scoreView?'table-row':'none';
+  });
+  recalc();
 }
 
 function recalc(){
