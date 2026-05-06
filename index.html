@@ -706,6 +706,7 @@ function updateGroupUI(){
 
 function renderGroupList(){
   var wrap=$('grp-list-wrap');if(!wrap)return;
+  console.log('renderGroupList called, allGroups:', allGroups.length, 'cg:', cg&&cg.name);
   var playWrap=$('grp-players-wrap');
 
   if(!allGroups.length){
