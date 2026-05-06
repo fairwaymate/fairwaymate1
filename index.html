@@ -353,7 +353,7 @@ table.sc input[type=number]:focus{background:var(--gl);border-radius:3px}
       </div>
 
       <!-- STEP 2A: Mates group (mates mode only) -->
-      <div id="grp-section" class="card step-card step-locked" style="display:none">
+      <div id="grp-section" class="card step-card" style="display:none">
         <!-- Header row with inline action buttons -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px">
           <div class="ctitle" style="margin-bottom:0"><span class="step-num pending" id="snum-2">2</span>Which mates group?</div>
@@ -1414,8 +1414,9 @@ function unlockStep(n){
 }
 
 function checkStepProgress(){
-  // Step 2: unlock when Step 1 done (always done)
-  unlockStep(rm==='solo'?'solo-section':'2');
+  // Step 2: always unlocked — user needs to be able to interact with it
+  unlockStep(2);
+  var soloSec=$('solo-section');if(soloSec)soloSec.classList.remove('step-locked');
 
   // Step 2 confirmed: mates group selected + players chosen, or solo mode
   var step2done=false;
@@ -1425,26 +1426,25 @@ function checkStepProgress(){
   } else {
     step2done=cg&&selectedPlayers.length>0;
     if(step2done)confirmStep(2);
-    else lockStep(2);
+    else unlockStep(2); // keep unlocked but not confirmed
   }
 
-  // Step 3: unlock when step 2 done
+  // Step 3: unlock when step 2 done, otherwise lock
   if(step2done)unlockStep(3);
   else lockStep(3);
 
   // Step 3 confirmed: course selected
   var step3done=!!ac;
   if(step3done)confirmStep(3);
-  else if(step2done)unlockStep(3);
 
-  // Step 4: unlock when step 3 done
+  // Step 4: unlock when step 3 done, otherwise lock
   if(step3done)unlockStep(4);
   else lockStep(4);
 
   // Step 4 confirmed: date set
   var rd=$('r-date');
   var step4done=rd&&rd.value;
-  if(step4done){confirmStep(4);}
+  if(step4done)confirmStep(4);
 }
 
 var scoreView='stab'; // 'gross', 'net', 'stab'
